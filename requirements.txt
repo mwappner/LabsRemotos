@@ -1,0 +1,11 @@
+flask
+flask-sqlalchemy
+flask-bootstrap
+wtforms
+flask_wtf
+click
+pyaes
+wtforms-components
+itsdangerous
+Flask-Restless
+Flask-OAuthlib
