@@ -59,7 +59,7 @@ def index():
 def view_frecuencia(valor=None):
 
     if valor:
-        dev.change_freq = valor
+        dev.change_freq(valor)
         return jsonify(status=0)
 
     return jsonify(status=0, valor=dev.frecuencia)
@@ -70,8 +70,8 @@ def view_frecuencia(valor=None):
 def view_fase(valor=None):
 
     if valor:
-        dev.change_phase = valor
-        return jsonify(status=0) #devuelve status=0 dos veces?
+        dev.change_phase(valor)
+        return jsonify(status=0) #no queremos que devuelva el estado actual de la variable siempre?
 
     return jsonify(status=0, valor=dev.fase)
 
@@ -81,7 +81,7 @@ def view_fase(valor=None):
 def view_amplitud(valor=None):
 
     if valor:
-        dev.change_amp = valor
+        dev.change_amp(valor)
         return jsonify(status=0)
 
     return jsonify(status=0, valor=dev.amplitud)
@@ -98,12 +98,42 @@ def view_foto(delay=None):
 
 @app.route('/barrido/<valores>')
 def hacer_barrido(valores=None):
-    #falta un check para ver que valores sea lo que creo que es
-    #espero algo de la forma 'tiempo_frecini_frecfin'
+    #falta un check bonito para ver que valores sea lo que 
+    #creo que es. Espero algo de la forma 'tiempo_frecini_frecfin'
     valores = valores.split('_')
+    if len(valores)!=3:
+        pass #mandar error
+
+    try:
+        valores = [float(v) for v in valores]
+    except ValueError: #alguno no era convetible
+        pass #mandar error
+
     dev.sweep(*valores)
     sleep(valores[0]) #esperar a que termine el barrido, bloquea todo
     return send_file('video/filmacion.h264')
+
+
+@app.route('/encendido/<int:valor>')
+def view_encendido(valor=None):
+
+    if valor is not None:
+        if valor not in (0,1):
+            pass #mandar error
+        dev.ison = bool(valor)
+        return jsonify(status=0)
+
+    return jsonify(status=0, valor=dev.ison)
+
+
+@app.route('duracion/<float:valor>')
+def view_duracion(valor=None):
+
+    if valor:
+        dev.change_duration(valor)
+        return jsonify(status=0)
+
+    return jsonify(status=0, valor=dev.duracion)
 
 
 def main(debug=True, browser=False, port=5000):

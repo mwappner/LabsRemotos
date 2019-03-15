@@ -44,7 +44,7 @@ class Oscilator:
 		#caigan en el rango adecuado
 		if name in rangos:
 			value = clip_between(value, *rangos[name])
-		self.__dict__[name] = value
+		super().__setattr__(name, value)
 
 	def __init__(self):
 		#Por default, arranca con los valores mínimos del
@@ -70,6 +70,7 @@ class Oscilator:
 		if not isinstance(value, bool):
 			raise TypeError('Value must be boolean.')
 
+		#encenderlo o apagarlo sólo si el usuario lo pider y es necesario:
 		if value:
 			if not self.ison:
 				self.play()
@@ -92,6 +93,10 @@ class Oscilator:
 
 	def change_freq(self, value):
 		self.frecuencia = value
+		self.play()
+
+	def change_duration(self, value):
+		self.duracion = value
 		self.play()
 
 	def change_amp(self, value):
