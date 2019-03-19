@@ -67,9 +67,6 @@ class Oscilator:
 		return self._ison
 	@ison.setter
 	def ison(self, value):
-		if not isinstance(value, bool):
-			raise TypeError('Value must be boolean.')
-
 		#encenderlo o apagarlo sólo si el usuario lo pider y es necesario:
 		if value:
 			if not self.ison:

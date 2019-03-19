@@ -120,7 +120,7 @@ def view_encendido(valor=None):
     if valor is not None:
         if valor not in (0,1):
             pass #mandar error
-        dev.ison = bool(valor)
+        dev.ison = valor
         return jsonify(status=0)
 
     return jsonify(status=0, valor=dev.ison)
@@ -141,4 +141,5 @@ def main(debug=True, browser=False, port=5000):
         import threading, webbrowser
         url = "http://127.0.0.1:{0}".format(port)
         threading.Timer(3, lambda: webbrowser.open(url)).start()
-    app.run(port=port, debug=debug)
+    #app.run(port=port, debug=debug)
+    app.run(host = '0.0.0.0',port=5000)
