@@ -23,18 +23,13 @@ class ProcRunning:
 
 	def run_new(self, command):
 		#Kill prevoius process, if needed
-		if not self.subprocess is None:
-			if self.is_alive:
-				self.kill()
+		self.kill()
 
 		self.subprocess = run(command, block=False)
 
-	@property #read-only
-	def is_alive(self):
-		return self.subprocess.is_alive
-
 	def kill():
-		self.subprocess.kill()
+		if not self.subprocess is None:
+			self.subprocess.kill()
 
 class Oscilator:
 	'''A class containing the parameters of the device.'''
