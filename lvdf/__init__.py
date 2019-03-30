@@ -59,7 +59,7 @@ def index():
 def view_frecuencia(valor=None):
 
     if valor:
-        dev.change_freq(valor)
+        dev. frecuencia = valor
         return jsonify(status=0)
 
     return jsonify(status=0, valor=dev.frecuencia)
@@ -70,7 +70,7 @@ def view_frecuencia(valor=None):
 def view_fase(valor=None):
 
     if valor:
-        dev.change_phase(valor)
+        dev.fase = valor
         return jsonify(status=0) #no queremos que devuelva el estado actual de la variable siempre?
 
     return jsonify(status=0, valor=dev.fase)
@@ -81,7 +81,7 @@ def view_fase(valor=None):
 def view_amplitud(valor=None):
 
     if valor:
-        dev.change_amp(valor)
+        dev.amplitud = valor
         return jsonify(status=0)
 
     return jsonify(status=0, valor=dev.amplitud)
@@ -118,7 +118,7 @@ def hacer_barrido(valores=None):
 def view_duracion(valor=None):
 
     if valor:
-        dev.change_duration(valor)
+        dev.duration  = valor
         return jsonify(status=0)
 
     return jsonify(status=0, valor=dev.duracion)
