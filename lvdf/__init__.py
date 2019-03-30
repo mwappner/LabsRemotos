@@ -114,18 +114,6 @@ def hacer_barrido(valores=None):
     return send_file('video/filmacion.h264')
 
 
-@app.route('/encendido/<int:valor>')
-def view_encendido(valor=None):
-
-    if valor is not None:
-        if valor not in (0,1):
-            pass #mandar error
-        dev.ison = valor
-        return jsonify(status=0)
-
-    return jsonify(status=0, valor=dev.ison)
-
-
 @app.route('duracion/<float:valor>')
 def view_duracion(valor=None):
 

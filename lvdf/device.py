@@ -11,8 +11,10 @@ def clip_between(value, lower=0, upper=100):
     '''Clips value to the (lower, upper) interval, i.e. if value
     is less than lower, it return lower, if its grater than upper,
     it return upper, else, it returns value unchanged.'''
-    value = max(lower, value)
-    value = min(upper, value)
+    if value<lower:
+        return lower
+    if value>upper:
+        return upper
     return value
 
 class ProcRunning:
@@ -22,12 +24,11 @@ class ProcRunning:
 		self.subprocess = None
 
 	def run_new(self, command):
-		#Kill prevoius process, if needed
-		self.kill()
-
+		#Kill prevoius process
+		self.kill() #killing a dead subproc raises no error
 		self.subprocess = run(command, block=False)
 
-	def kill():
+	def kill(self):
 		if not self.subprocess is None:
 			self.subprocess.kill()
 
@@ -50,33 +51,13 @@ class Oscilator:
 		self.ison = False
 		self.duracion = 300 #default de la duración es 5 minutos
 
-
-	@property
-	def ison(self):
-		#Cada vez que pido el valor ison, lo actualizo con el
-		#estado real del output
-		if self.proc_running.subprocess is not None:
-			self._ison = self.proc_running.is_alive
-		else:
-			self._ison = False
-		return self._ison
-	@ison.setter
-	def ison(self, value):
-		#encenderlo o apagarlo sólo si el usuario lo pider y es necesario:
-		if value:
-			if not self.ison:
-				self.play()
-		else:
-			if self.ison:
-				self.proc_running.kill()
-
 	def play(self):
 		#play with current values
 		command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
 		self.proc_running.run_new(command)
 
 	def sweep(self, time, freq_start, freq_end):
-		command = 'play -n -c1 synth {} sine {}:{}'.format(tiempo, freq_start, freq_end)
+		command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
 		self.proc_running.run_new(command)
 
 	def snapshot(self, delay):
