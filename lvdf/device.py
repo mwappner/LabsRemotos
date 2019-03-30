@@ -57,7 +57,7 @@ class Oscilator:
 		self.proc_running.run_new(command)
 
 	def sweep(self, time, freq_start, freq_end):
-		command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
+		command = 'barrido.sh {} {} {}'.format(time, freq_start, freq_end)
 		self.proc_running.run_new(command)
 
 	def snapshot(self, delay):
