@@ -126,6 +126,25 @@ def hacer_barrido(valores=None):
     t.start()
 
 
+@app.route('/fotos/<valores>')
+defsacar_fotos(valores=None):
+    #falta un check bonito para ver que valores sea lo que 
+    #creo que es. Espero algo de la forma 'frecini_frecfin'
+    valores = valores.split('_')
+    if len(valores)!=2:
+        pass #mandar error
+
+    try:
+        valores = [float(v) for v in valores]
+    except ValueError: #alguno no era convetible
+        pass #mandar error
+
+    dev.fotos(*valores)
+    mandar = lambda: send_file('fotos/*') #mandar muchas fotos?
+    t = Timer(110, mandar)
+    t.start()
+
+
 @app.route('/stop')
 def stop():
     dev.stop()
