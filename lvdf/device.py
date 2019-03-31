@@ -1,11 +1,12 @@
 from delegator import run
+from time import sleep
 
 rangos = {
-    'frecuencia': (20, 2000),
+    'frecuencia': (20, 2000), #Hz
     'amplitud': (0, 1),
-    'fase': (-180, 180),
-    'duracion': (0,36000), 
-    'exposicion': (100, 5000000)
+    'fase': (-180, 180), #grados
+    'duracion': (0,36000), #segundos
+    'exposicion': (100, 5000000) #microsegundos
     }
 replay_when_changed = ['frecuencia',
                        #'amplitud',
@@ -66,9 +67,9 @@ class Oscilator:
 
     def _debugrun(self, command):
         if self._debug:
-            print(command)
+            self.proc_running.run_new(command)
         else:
-            self.proc_running.run_new(command)        
+            print(command)
 
     def play(self):
         #play with current values
@@ -89,3 +90,10 @@ class Oscilator:
                    '-ex off -n -br 70 -co 50 -t {dur} -v&').format(
                            file = 'video/filmacion.h264', dur = duration)
         self._debugrun(command)
+        
+    def fotos(self, time, freq_start, freq_end):
+        d = self.__dict__
+        self.exposicion = 500000 #en microsegundos
+        
+        
+        self.exposicion = ss

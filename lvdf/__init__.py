@@ -109,6 +109,7 @@ def hacer_barrido(valores=None):
     except ValueError: #alguno no era convetible
         pass #mandar error
 
+    dev.video(valores[0])
     dev.sweep(*valores)
     sleep(valores[0]) #esperar a que termine el barrido, bloquea todo
     return send_file('video/filmacion.h264')
