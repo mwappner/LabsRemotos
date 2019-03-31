@@ -1,7 +1,7 @@
 
 from flask import Flask, request, send_file, jsonify, Response
 from device import Oscilator
-from time import sleep
+from threading import Timer
 
 
 app = Flask(__name__)
@@ -86,6 +86,16 @@ def view_amplitud(valor=None):
 
     return jsonify(status=0, valor=dev.amplitud)
 
+@app.route('/duracion')
+@app.route('duracion/<float:valor>')
+def view_duracion(valor=None):
+
+    if valor:
+        dev.duration  = valor
+        return jsonify(status=0)
+
+    return jsonify(status=0, valor=dev.duracion)
+
 
 @app.route('/foto/<float:delay>')
 def view_foto(delay=None):
@@ -111,18 +121,15 @@ def hacer_barrido(valores=None):
 
     dev.video(valores[0])
     dev.sweep(*valores)
-    sleep(valores[0]) #esperar a que termine el barrido, bloquea todo
-    return send_file('video/filmacion.h264')
+    mandar = lambda: send_file('video/filmacion.h264')
+    t = Timer(valores[0] + 3, mandar)
+    t.start()
 
 
-@app.route('duracion/<float:valor>')
-def view_duracion(valor=None):
-
-    if valor:
-        dev.duration  = valor
-        return jsonify(status=0)
-
-    return jsonify(status=0, valor=dev.duracion)
+@app.route('/stop')
+def stop():
+    dev.stop()
+    return jsonify(status=0)
 
 
 def main(debug=True, browser=False, port=5000):
