@@ -2,7 +2,8 @@ from delegator import run
 from time import sleep
 from numpy import linspace
 from threading import Thread
-from queue import Queue
+from queue import Queue, Empty
+from warnings import warn
 
 rangos = {
     'frecuencia': (20, 2000), #Hz
@@ -22,8 +23,10 @@ def clip_between(value, lower=0, upper=100):
     is less than lower, it return lower, if its grater than upper,
     it return upper, else, it returns value unchanged.'''
     if value<lower:
+        warn('Value out of bounds', SyntaxWarning)
         return lower
     if value>upper:
+        warn('Value out of bounds', SyntaxWarning)
         return upper
     return value
 
@@ -122,7 +125,7 @@ class Oscilator:
                 #veo si me indicaron que pare
                 try:
                     self.stopqueue.get(block=False)
-                except:
+                except Empty:
                     continue
                 else:
                     break
