@@ -72,7 +72,6 @@ class Oscilator:
         
         self.proc_running = ProcRunning()
         self.stopqueue = Queue()
-        self.fotos_thread = Thread()
 
     def _debugrun(self, command):
         if self._debug:
@@ -147,6 +146,6 @@ class Oscilator:
             os.remove('timelapse/' + f)
         
         #inicializo y prendo el thread
-        self.fotos_thread = Thread(target=accion)
-        self.fotos_thread.start()
+        fotos_thread = Thread(target=accion)
+        fotos_thread.start()
         
