@@ -4,6 +4,7 @@ from numpy import linspace
 from threading import Thread
 from queue import Queue, Empty
 from warnings import warn
+from os import listdir, remove
 
 rangos = {
     'frecuencia': (20, 2000), #Hz
@@ -81,6 +82,7 @@ class Oscilator:
 
     def play(self):
         #play with current values
+        self.stopqueue.put(1)
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
         self._debugrun(command)
 
@@ -89,19 +91,20 @@ class Oscilator:
         self.stopqueue.put(1)
             
     def sweep(self, time, freq_start, freq_end):
+        self.stopqueue.put(1)
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
         self._debugrun(command)
 
     def snapshot(self, delay, file='static/cuerda.jpg'):
         command = 'raspistill -t {delay} -ss {shutterspeed} -o {file}'.format(
                 delay = delay, shutterspeed = self.exposicion, file = file)
-        self._debugrun(command)
+        run(command)
 
     def video(self, duration):
         command = ('raspivid -o {file} -w 960 -h 516 -roi 0,0.5,1,1 -fps 30 ' 
                    '-ex off -n -br 70 -co 50 -t {dur} -v&').format(
                            file = 'video/filmacion.h264', dur = duration)
-        self._debugrun(command)
+        run(command)
         
     def fotos(self, freq_start, freq_end):
         '''Barre cien frecuencais entre freq_start y freq_end. Saca una foto 
@@ -112,6 +115,7 @@ class Oscilator:
         
         self.exposicion = 500000 #en microsegundos
         self.duracion = 1
+        self.amplitud = 1
         frecuencias = linspace(freq_start, freq_end, 100)
         
         #devinoo funcion a correr en el thread
@@ -137,6 +141,10 @@ class Oscilator:
         #vacío la cola por si acaso
         while not self.stopqueue.empty():
             self.stopqueue.get(block=False)
+
+        #vacío carpeta de fotos
+        for f in os.listdir('timelapse'):
+            os.remove('timelapse/' + f)
         
         #inicializo y prendo el thread
         self.fotos_thread = Thread(target=accion)
