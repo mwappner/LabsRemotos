@@ -4,12 +4,12 @@ WiFi, Bluetooth y Ethernet
 Nombre del host: raspberrypi1207 (''>> hostname ; ''y para ver IP:'' >> hostname -I'')
 Usr: pi
 Pass: Jauretche1207
-IP:  10.99.43.111
+IP:  192.168.123.205 (antes era 10.99.43.111)
 
 Para pasarme archivos a la máquina (desde CMD en Windows):
-	pscp -v -pw Jauretche1207 pi@10.99.43.111:/home/pi/jauretche/filmacion.h264 "C:\Users\Lenovo\Desktop"
+	pscp -v -pw Jauretche1207 pi@192.168.123.205:/home/pi/jauretche/filmacion.h264 "C:\Users\Lenovo\Desktop"
 Y al revés:
-	pscp -v -pw Jauretche1207 "C:\Users\Lenovo\Desktop\Se-llama-Jose-MIX.mp3" pi@10.99.43.111:/home/pi/jauretche/
+	pscp -v -pw Jauretche1207 "C:\Users\Lenovo\Desktop\Se-llama-Jose-MIX.mp3" pi@192.168.123.205:/home/pi/jauretche/
 
 SO de la Raspberry Pi
 Operating System: Raspbian GNU/Linux 9 (stretch)
