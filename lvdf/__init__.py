@@ -87,12 +87,24 @@ def view_amplitud(valor=None):
     return jsonify(status=0, valor=dev.amplitud)
 
 
+@app.route('/duracion')
+@app.route('/duracion/<float:valor>')
+def view_duracion(valor=None):
+
+    if valor:
+        dev.change_duration(valor)
+        return jsonify(status=0)
+
+    return jsonify(status=0, valor=dev.duracion)
+
+
 @app.route('/foto/<float:delay>')
 def view_foto(delay=None):
 
     if not delay:
         delay=1
     dev.snapshot(delay)
+    sleep(1 + delay/1000)
     return send_file('static/cuerda.jpg')
 
 
@@ -102,26 +114,16 @@ def hacer_barrido(valores=None):
     #creo que es. Espero algo de la forma 'tiempo_frecini_frecfin'
     valores = valores.split('_')
     if len(valores)!=3:
-        pass #mandar error
+        return jsonify(status=-2, msg = 'Escribí bien.') #mandar error
 
     try:
         valores = [float(v) for v in valores]
     except ValueError: #alguno no era convetible
-        pass #mandar error
+        return jsonify(status=-2, msg = 'Escribí bien.') #mandar error
 
     dev.sweep(*valores)
     sleep(valores[0]+15) #esperar a que termine el barrido, bloquea todo
     return send_file('video/filmacion.h264')
-
-
-@app.route('duracion/<float:valor>')
-def view_duracion(valor=None):
-
-    if valor:
-        dev.change_duration(valor)
-        return jsonify(status=0)
-
-    return jsonify(status=0, valor=dev.duracion)
 
 
 def main(debug=True, browser=False, port=5000):
