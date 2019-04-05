@@ -1,6 +1,6 @@
 
 from flask import Flask, request, send_file, jsonify, Response
-from device import Oscilator
+from . import device
 from time import sleep
 
 
@@ -34,7 +34,7 @@ SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 #                             {'WWWAuthenticate': 'Basic realm="Login Required"'})
 #     return decorated_function
 
-dev = Oscilator()
+dev = device.Oscilator()
 
 @app.route('/')
 def index():
