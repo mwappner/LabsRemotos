@@ -62,7 +62,7 @@ class Oscilator:
 
 	def snapshot(self, delay):
 		command = 'raspistill -t {} -o static/cuerda.jpg'.format(delay)
-		self.proc_running.run_new(command)
+		run(command, block=False)
 
 	def change_freq(self, value):
 		self.frecuencia = value
