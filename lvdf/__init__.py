@@ -1,6 +1,6 @@
 
 from flask import Flask, request, send_file, jsonify, Response
-from device import Oscilator
+from device import Oscilator, rangos
 from threading import Timer
 
 
@@ -54,6 +54,12 @@ def index():
 #                         {'WWWAuthenticate': 'Basic realm="Login Required"'})
 #
 
+@app.route('/rangos')
+def view_frecuencia():
+
+    return jsonify(status=0, valor=rangos)
+
+
 @app.route('/frecuencia')
 @app.route('/frecuencia/<float:valor>')
 def view_frecuencia(valor=None):
@@ -85,6 +91,7 @@ def view_amplitud(valor=None):
         return jsonify(status=0)
 
     return jsonify(status=0, valor=dev.amplitud)
+
 
 @app.route('/duracion')
 @app.route('duracion/<float:valor>')
