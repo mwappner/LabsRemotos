@@ -1,10 +1,11 @@
 
 from flask import Flask, request, send_file, jsonify, Response
-from device import Oscilator, rangos
+from .device import rangos, Oscilator, clip_between
 from threading import Timer
 from os import listdir, remove, path
 from zipfile import ZipFile
 from warnings import catch_warnings
+import os
 
 
 app = Flask(__name__)
@@ -39,7 +40,7 @@ SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 #                             {'WWWAuthenticate': 'Basic realm="Login Required"'})
 #     return decorated_function
 
-dev = Oscilator()
+dev = Oscilator(debug=True)
 
 @app.route('/')
 def index():
@@ -59,18 +60,28 @@ def index():
 #                         {'WWWAuthenticate': 'Basic realm="Login Required"'})
 #
 
-def cambiar_valor(parametro, valor):
-	'''Intenta cambiar el el valor del parámetro dado. Si se levanta una
-	advertencia, asume que es porque el valor estuvo fuera del rango dado
-	y devuelve el valor correspondiente de status: -2. Faltaría chequear 
-	qué warning se levantó.'''
-	status = 0
-	if valor is not None:
-		with catch_warnings(record=True) as w:
-			setattr(dev, parametro, valor)
-			if w: #Es una lista vacía si no hubo warnings
-				status = -2
-	return status, getattr(dev, parametro)
+def cambiar_valor(parametro, valor, status=0):
+    '''Intenta cambiar el el valor del parámetro dado. Si se levanta una
+    advertencia, asume que es porque el valor estuvo fuera del rango dado
+    y devuelve el valor correspondiente de status: -2. Faltaría chequear 
+    qué warning se levantó.'''
+    if valor is not None:
+        with catch_warnings(record=True) as w:
+            setattr(dev, parametro, valor)
+            if w: #Es una lista vacía si no hubo warnings
+                status = -2
+    return status, getattr(dev, parametro)
+
+
+def chequear_rango(parametro, valor, status=0):
+    '''Chequea que el valor dado es´té en el rango adecuado, según el 
+    parámetro. Si no lo está, avisa usando status=-2 y lo mete en el
+    rango adecuado.'''
+    with catch_warnings(record=True) as w:
+        valor = clip_between(valor, *rangos[parametro])
+        if w: #Es una lista vacía si no hubo warnings
+            status = -2
+    return status, valor
 
 
 @app.route('/rangos')
@@ -80,6 +91,7 @@ def view_rangos():
 
 @app.route('/frecuencia')
 @app.route('/frecuencia/<float:valor>')
+@app.route('/frecuencia/<int:valor>')
 def view_frecuencia(valor=None):
     status, valor_salida = cambiar_valor('frecuencia', valor)
     return jsonify(status=status, valor=valor_salida)
@@ -87,6 +99,7 @@ def view_frecuencia(valor=None):
 
 @app.route('/fase')
 @app.route('/fase/<float:valor>')
+@app.route('/fase/<int:valor>')
 def view_fase(valor=None):
     status, valor_salida = cambiar_valor('fase', valor)
     return jsonify(status=status, valor=valor_salida)
@@ -94,20 +107,23 @@ def view_fase(valor=None):
 
 @app.route('/amplitud')
 @app.route('/amplitud/<float:valor>')
+@app.route('/amplitud/<int:valor>')
 def view_amplitud(valor=None):
     status, valor_salida = cambiar_valor('amplitud', valor)
     return jsonify(status=status, valor=valor_salida)
 
 
-
 @app.route('/duracion')
 @app.route('/duracion/<float:valor>')
+@app.route('/duracion/<int:valor>')
 def view_duracion(valor=None):
     status, valor_salida = cambiar_valor('duracion', valor)
     return jsonify(status=status, valor=valor_salida)
 
 
+@app.route('/foto')
 @app.route('/foto/<float:delay>')
+@app.route('/foto/<int:delay>')
 def view_foto(delay=None):
 
     if not delay:
@@ -116,64 +132,94 @@ def view_foto(delay=None):
     return send_file('static/cuerda.jpg')
 
 
-@app.route('/barrido/<string:valores>')
-def hacer_barrido(valores=None):
-    #falta un check bonito para ver que valores sea lo que 
-    #creo que es. Espero algo de la forma 'tiempo_frecini_frecfin'
-    valores = valores.split('_')
+@app.route('/barrido/<int:duracion>/<int:frec_i>/<int:frec_f>')
+@app.route('/barrido/<int:duracion>/<float:frec_i>/<int:frec_f>')
+@app.route('/barrido/<int:duracion>/<int:frec_i>/<float:frec_f>')
+@app.route('/barrido/<int:duracion>/<float:frec_i>/<float:frec_f>')
+def hacer_barrido(duracion, frec_i, frec_f):
 
-    try:
-    	if len(valores)!=2:
-    		raise ValueError()
-        valores = [float(v) for v in valores]
-    except ValueError: #alguno no era convetible
-    	msg = 'Valor inválido. Debe ser "tiempo_frecini_frecfin".' 
-        return jsonify(status=-1, mensaje=msg)
+    # Chequeo que los valores estén en el rango admitido
+    status, frec_i = chequear_rango('frecuencia', frec_i)
+    status, frec_f = chequear_rango('frecuencia', frec_f, status)
+    #status, duracion = chequear_rango('duracion', duracion, status)
 
-    dev.video(valores[0])
-    dev.sweep(*valores)
-    mandar = dict(file='video',
-    				 tiempo_estimado=valores[0],
-    				 unidades='segundos')
-    return jsonify(status=0, valor=mandar)
-
-
-@app.route('/fotos/<string:valores>')
-def sacar_fotos(valores=None):
-    #falta un check bonito para ver que valores sea lo que 
-    #creo que es. Espero algo de la forma 'frecini_frecfin'
-    valores = valores.split('_')
     
     try:
-    	if len(valores)!=2:
-    		raise ValueError()
-        valores = [float(v) for v in valores]
-    except ValueError: #alguno no era convetible
-        msg = 'Valor inválido. Debe ser "frecini_frecfin".' 
+        dev.video(duracion)
+        dev.sweep(duracion, frec_i, frec_f)
+        mandar = dict(file='video',
+                         tiempo_estimado=duracion,
+                         unidades='segundos',
+                         barriendo_entre=[frec_i, frec_f])
+        return jsonify(status=status, valor=mandar)
+    except ValueError: #las frecuencias eran incompatibles
+        msg = ('Valores de frecuencias incompatibles. Tal vez frec_i={} igual o más grande que '
+            'frec_f={}, o ambas fuera del rango permitido, en cuyo caso frec_i=frec_f.'
+            ).format(frec_i, frec_f)
+        if status == -2:
+            msg += '\n Frecuencias estaban fuera del rango permitido (status=-2).'
         return jsonify(status=-1, mensaje=msg)
 
-    mandar = dict(file='timelapse',
-					 tiempo_estimado=200, #mucho tiempo extra (debería tardar 100)
-					 unidades='segundos')
-    return jsonify(status=0, valor=mandar)
+
+@app.route('/fotos/<int:frec_i>/<int:frec_f>')
+@app.route('/fotos/<int:frec_i>/<float:frec_f>')
+@app.route('/fotos/<float:frec_i>/<int:frec_f>')
+@app.route('/fotos/<float:frec_i>/<float:frec_f>')
+def sacar_fotos(frec_i, frec_f):
+
+    # Chequeo que los valores estén en el rango admitido
+    status, frec_i = chequear_rango('frecuencia', frec_i)
+    status, frec_f = chequear_rango('frecuencia', frec_f, status)
+
+    try:
+        dev.fotos(frec_i, frec_f)
+        mandar = dict(file='timelapse',
+                         tiempo_estimado=200, #mucho tiempo extra (debería tardar 100)
+                         unidades='segundos',
+                         barriendo_entre=[frec_i, frec_f])
+        return jsonify(status=status, valor=mandar)
+    except ValueError: #las frecuencias eran incompatibles
+        msg = ('Valores de frecuencias incompatibles. Tal vez frec_i={} igual o más grande que '
+            'frec_f={}, o ambas fuera del rango permitido, en cuyo caso frec_i=frec_f.'
+            ).format(frec_i, frec_f)
+        if status == -2:
+            msg += '\n Frecuencias estaban fuera del rango permitido (status=-2).'
+        return jsonify(status=-1, mensaje=msg)
+
+
+@app.route('/ultima_foto')
+def ultima_foto(delay=None):
+
+    try:
+        return send_file('static/cuerda.jpg')
+    except:
+        msg = 'Archivo no existente.'
+        return jsonify(status=-3, mensaje=msg)
 
 
 @app.route('/getvideo')
-def get_video()
-
-	#chequear qué pasa si no existe el archivo!!!!
-	return send_file('video/filmacion.h264')
+def get_video():
+    #chequear qué pasa si no existe el archivo!!!!
+    try:
+        return send_file('video/filmacion.h264')
+    except:
+        msg = 'Archivo no existente.'
+        return jsonify(status=-3, mensaje=msg)
 
 
 @app.route('/getfotos')
-def get_fotos()
-	lista = ['timelapse/'+f for f in os.listdir()]
-	with ZipFile('send.zip', 'w') as zf:
-		for f in lista:
-			zf.write(f)
-			remove(f)
+def get_fotos():
+    lista = ['timelapse/'+f for f in os.listdir('timelapse')]
+    if lista:
+        with ZipFile('send.zip', 'w') as zf:
+            for f in lista:
+                zf.write(f)
+                remove(f)
 
-	return send_file('send.zip')
+        return send_file('send.zip')
+    else:
+        msg = 'Archivo no existente.'
+        return jsonify(status=-3, mensaje=msg)
 
 
 @app.route('/stop')
@@ -188,4 +234,4 @@ def main(debug=True, browser=False, port=5000):
         url = "http://127.0.0.1:{0}".format(port)
         threading.Timer(3, lambda: webbrowser.open(url)).start()
     #app.run(port=port, debug=debug)
-    app.run(host = '0.0.0.0',port=5000)
+    app.run(host = '0.0.0.0', port=5000, debug=debug)

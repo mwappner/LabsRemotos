@@ -75,9 +75,10 @@ class Oscilator:
 
     def _debugrun(self, command):
         if self._debug:
-            self.proc_running.run_new(command)
-        else:
             print(command)
+        else:
+            self.proc_running.run_new(command)
+
 
     def play(self):
         #play with current values
@@ -90,6 +91,8 @@ class Oscilator:
         self.stopqueue.put(1)
             
     def sweep(self, time, freq_start, freq_end):
+        if freq_start >= freq_end:
+            raise ValueError('Frecuencias incompatibles.')
         self.stopqueue.put(1)
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
         self._debugrun(command)
@@ -109,6 +112,9 @@ class Oscilator:
         '''Barre cien frecuencais entre freq_start y freq_end. Saca una foto 
         de larga exposicion a cada frecuencia.'''
         
+        if freq_start >= freq_end:
+            raise ValueError('Frecuencias incompatibles.')
+
         #me guardo el estado actual del device
         d = self.__dict__.copy()
         
