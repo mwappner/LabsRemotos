@@ -10,6 +10,7 @@ dist/
 MANIFEST
 .tox
 *.h246
+*.zip
 
 # WebDAV file system cache files
 .DAV/
