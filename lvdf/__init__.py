@@ -128,7 +128,7 @@ def view_duracion(valor=None):
 @app.route('/exposicion')
 @app.route('/exposicion/<float:valor>')
 @app.route('/exposicion/<int:valor>')
-def view_duracion(valor=None):
+def view_exposicion(valor=None):
     status, valor_salida = cambiar_valor('exposicion', valor)
     return jsonify(status=status, valor=valor_salida)
 
