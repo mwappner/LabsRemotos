@@ -103,7 +103,7 @@ class Oscilator:
         self.stopqueue.put(1)
 
     def get_params(self):
-        return {k:self.__getattr__(k)  for k in rangos}
+        return {k:getattr(self, k) for k in rangos}
             
     def sweep(self, time, freq_start, freq_end):
         if freq_start >= freq_end:
