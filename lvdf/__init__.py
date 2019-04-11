@@ -141,7 +141,10 @@ def view_foto(delay=None):
     if not delay:
         delay=1
     dev.snapshot(delay)
-    return send_file('static/cuerda.jpg')
+    mandar = dict(file='foto',
+                         tiempo_estimado=0,
+                         unidades='segundos')
+        return jsonify(status=status, valor=mandar)
 
 
 @app.route('/barrido/<int:duracion>/<int:frec_i>/<int:frec_f>')
