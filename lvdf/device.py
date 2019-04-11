@@ -125,7 +125,7 @@ class Oscilator:
         #me guardo el estado actual del device
         d = self.__dict__.copy()
         
-        self.exposicion = 500000 #en microsegundos
+        self.exposicion = 500000 #0.5 seg, en microsegundos
         self.duracion = 1
         self.amplitud = 1
         frecuencias = linspace(freq_start, freq_end, 100)

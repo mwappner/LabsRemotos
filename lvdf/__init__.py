@@ -10,7 +10,6 @@ import os
 
 app = Flask(__name__)
 
-
 API_KEY = '17a1240802ec4726fe6c8e174d144dbe3b5c4d05'
 SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 
@@ -228,7 +227,16 @@ def stop():
     return jsonify(status=0)
 
 
+@app.route('/play')
+def play():
+    dev.play()
+    return jsonify(status=0)
+
+
 def main(debug=True, browser=False, port=5000):
+    if debug:
+        print(os.getcwd())
+
     if browser:
         import threading, webbrowser
         url = "http://127.0.0.1:{0}".format(port)
