@@ -40,7 +40,7 @@ SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 #                             {'WWWAuthenticate': 'Basic realm="Login Required"'})
 #     return decorated_function
 
-dev = Oscilator(debug=True)
+dev = Oscilator(debug=False)
 
 @app.route('/')
 def index():
