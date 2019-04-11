@@ -89,7 +89,7 @@ class Oscilator:
     def play(self):
         #play with current values
         self.stopqueue.put(1)
-        run('amixer set PCM -- {}}%'.format(self.amplitud*100))
+        run('amixer set PCM -- {}%'.format(self.amplitud*100))
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
         self._debugrun(command)
 
