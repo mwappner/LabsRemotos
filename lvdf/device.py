@@ -8,13 +8,20 @@ from os import listdir, remove
 
 rangos = {
     'frecuencia': (20, 2000), #Hz
-    'amplitud': (0, 1),
+    'amplitud': (.6, 1),
     'fase': (-180, 180), #grados
     'duracion': (0,36000), #segundos
     'exposicion': (100, 5000000) #microsegundos
     }
+iniciales = {
+    'frecuencia': 100, #Hz
+    'amplitud': 1,
+    'fase': 0, #grados
+    'duracion': rangos['duracion'][-1], #segundos
+    'exposicion': 100 #microsegundos
+    }
 replay_when_changed = ['frecuencia',
-                       #'amplitud',
+                       'amplitud',
                        #'fase',
                        'duracion',
                        ]
@@ -63,9 +70,8 @@ class Oscilator:
         #rango permitido
         self.initialized = False
         
-        for key, val in rangos.items():
-            self.__setattr__(key, val[0])
-        self.duracion = 300 #default de la duración es 5 minutos
+        for key, val in iniciales.items():
+            self.__setattr__(key, val)
         
         self.initialized = True
         self._debug = debug
@@ -83,6 +89,7 @@ class Oscilator:
     def play(self):
         #play with current values
         self.stopqueue.put(1)
+        run('amixer set PCM -- {}}%'.format(self.amplitud*100))
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
         self._debugrun(command)
 
