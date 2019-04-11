@@ -1,6 +1,6 @@
 
 from flask import Flask, request, send_file, jsonify, Response
-from .device import rangos, Oscilator, clip_between
+from .device import rangos, nombres, Oscilator, clip_between
 from threading import Timer
 from os import listdir, remove, path
 from zipfile import ZipFile
@@ -190,7 +190,7 @@ def sacar_fotos(frec_i, frec_f):
 def ultima_foto(delay=None):
 
     try:
-        return send_file('static/cuerda.jpg')
+        return send_file(nombres['foto'])
     except:
         msg = 'Archivo no existente.'
         return jsonify(status=-3, mensaje=msg)
@@ -198,9 +198,8 @@ def ultima_foto(delay=None):
 
 @app.route('/getvideo')
 def get_video():
-    #chequear qué pasa si no existe el archivo!!!!
     try:
-        return send_file('video/filmacion.h264')
+        return send_file(nombres['video'])
     except:
         msg = 'Archivo no existente.'
         return jsonify(status=-3, mensaje=msg)
@@ -208,13 +207,17 @@ def get_video():
 
 @app.route('/getfotos')
 def get_fotos():
-    lista = ['timelapse/'+f for f in os.listdir('timelapse')]
+    base = dev.nombres['timelapse']
+    lista = [os.path.join(base, f) for f in os.listdir(base)]
+
     if lista:
+        dev.stop() #para que no siga creando fotos mientras intento mandarlas
         with ZipFile('send.zip', 'w') as zf:
             for f in lista:
                 zf.write(f)
                 remove(f)
 
+        dev.play() #vuelvo a arrancar
         return send_file('send.zip')
     else:
         msg = 'Archivo no existente.'

@@ -18,13 +18,18 @@ iniciales = {
     'amplitud': 1,
     'fase': 0, #grados
     'duracion': rangos['duracion'][-1], #segundos
-    'exposicion': 100 #microsegundos
+    'exposicion': 100, #microsegundos
     }
 replay_when_changed = ['frecuencia',
                        'amplitud',
                        #'fase',
                        'duracion',
                        ]
+nombres = {
+    'video' : '/home/pi/jauretche/LabsRemotos/lvdf/video/filmacion.h264',
+    'foto' : '/home/pi/jauretche/LabsRemotos/lvdf/static/cuerda.jpg',
+    'timelapse' : '/home/pi/jauretche/LabsRemotos/lvdf/timelapse',
+    }
 
 def clip_between(value, lower=0, upper=100):
     '''Clips value to the (lower, upper) interval, i.e. if value
@@ -79,12 +84,12 @@ class Oscilator:
         self.proc_running = ProcRunning()
         self.stopqueue = Queue()
 
+
     def _debugrun(self, command):
         if self._debug:
             print(command)
         else:
             self.proc_running.run_new(command)
-
 
     def play(self):
         #play with current values
@@ -104,7 +109,7 @@ class Oscilator:
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
         self._debugrun(command)
 
-    def snapshot(self, delay, file='static/cuerda.jpg'):
+    def snapshot(self, delay, file=nombres['foto']):
         command = 'raspistill -t {delay} -ss {shutterspeed} -o {file}'.format(
                 delay = delay, shutterspeed = self.exposicion, file = file)
         run(command)
@@ -112,7 +117,8 @@ class Oscilator:
     def video(self, duration):
         command = ('raspivid -o {file} -w 960 -h 516 -roi 0,0.5,1,1 -fps 30 ' 
                    '-ex off -n -br 70 -co 50 -t {dur} -v&').format(
-                           file = 'video/filmacion.h264', dur = duration)
+                           file = nombres['video'],
+                           dur = duration)
         run(command)
         
     def fotos(self, freq_start, freq_end):
@@ -130,12 +136,14 @@ class Oscilator:
         self.amplitud = 1
         frecuencias = linspace(freq_start, freq_end, 100)
         
-        #devinoo funcion a correr en el thread
+        nombre = lambda freq: os.path.join(nombres['timelapse'],'{:.1f}Hz.jpg'.format(freq))
+
+        #defino funcion a correr en el thread
         def accion():
             for f in frecuencias:
                 self.frecuencia = f #esto pone a andar por 1 segundo
                 sleep(0.25)
-                self.snapshot(1, 'timelapse/{:.1f}Hz.jpg'.format(f))
+                self.snapshot(1, nombre(f))
                 sleep(0.75)
                 
                 #veo si me indicaron que pare
@@ -155,9 +163,8 @@ class Oscilator:
             self.stopqueue.get(block=False)
 
         #vacío carpeta de fotos
-        for f in os.listdir('timelapse'):
-            os.remove('timelapse/' + f)
-        
+        for f in os.listdir(nombres['timelapse']):
+            os.remove(os.path.join(nombres['timelapse'], f))
         #inicializo y prendo el thread
         fotos_thread = Thread(target=accion)
         fotos_thread.start()
