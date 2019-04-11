@@ -88,6 +88,11 @@ def view_rangos():
     return jsonify(status=0, valor=rangos)
 
 
+@app.route('/parametros')
+def view_parametros():
+    return jsonify(status=0, valor=dev.get_params())
+
+
 @app.route('/frecuencia')
 @app.route('/frecuencia/<float:valor>')
 @app.route('/frecuencia/<int:valor>')
@@ -117,6 +122,14 @@ def view_amplitud(valor=None):
 @app.route('/duracion/<int:valor>')
 def view_duracion(valor=None):
     status, valor_salida = cambiar_valor('duracion', valor)
+    return jsonify(status=status, valor=valor_salida)
+
+
+@app.route('/exposicion')
+@app.route('/exposicion/<float:valor>')
+@app.route('/exposicion/<int:valor>')
+def view_duracion(valor=None):
+    status, valor_salida = cambiar_valor('exposicion', valor)
     return jsonify(status=status, valor=valor_salida)
 
 

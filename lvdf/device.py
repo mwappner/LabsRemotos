@@ -8,14 +8,14 @@ from os import listdir, remove
 
 rangos = {
     'frecuencia': (20, 2000), #Hz
-    'amplitud': (.6, 1),
+    'amplitud': (.6, .96), #en escala [0,1]
     'fase': (-180, 180), #grados
     'duracion': (0,36000), #segundos
     'exposicion': (100, 5000000) #microsegundos
     }
 iniciales = {
     'frecuencia': 100, #Hz
-    'amplitud': 1,
+    'amplitud': rangos['amplitud'][-1], #en escala [0,1]
     'fase': 0, #grados
     'duracion': rangos['duracion'][-1], #segundos
     'exposicion': 100, #microsegundos
@@ -101,6 +101,9 @@ class Oscilator:
     def stop(self):
         self.proc_running.kill()
         self.stopqueue.put(1)
+
+    def get_params(self):
+        return {k:self.__getattr__(k)  for k in rangos}
             
     def sweep(self, time, freq_start, freq_end):
         if freq_start >= freq_end:
