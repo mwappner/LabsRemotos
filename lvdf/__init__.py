@@ -149,7 +149,7 @@ def view_foto(delay=None):
     mandar = dict(file='foto',
                          tiempo_estimado=0,
                          unidades='segundos')
-        return jsonify(status=status, valor=mandar)
+        return jsonify(status=0, valor=mandar)
 
 
 @app.route('/barrido/<int:duracion>/<int:frec_i>/<int:frec_f>')
