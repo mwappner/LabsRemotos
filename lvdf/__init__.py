@@ -10,7 +10,7 @@ app = Flask(__name__)
 API_KEY = '17a1240802ec4726fe6c8e174d144dbe3b5c4d05'
 SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 
- # status_key = {0:'Todo OK', -1:'Valor inválido', -2:'Valor fuera de rango'}
+ # status_key = {0:'Todo OK', -1:'Valor inválido', -2:'Valor fuera de rango, -3:'Archivo inexistente'}
 
 
 # def require_api_key(view_function):
@@ -70,12 +70,14 @@ def cambiar_valor(parametro, valor, status=0):
     return status, getattr(dev, parametro)
 
 
-def chequear_rango(parametro, valor, status=0):
+def chequear_rango(parametro, valor, status=0, rango=None:
     '''Chequea que el valor dado es´té en el rango adecuado, según el 
     parámetro. Si no lo está, avisa usando status=-2 y lo mete en el
     rango adecuado.'''
+    if rango is None:
+        rango = rangos[parametro]
     with catch_warnings(record=True) as w:
-        valor = clip_between(valor, *rangos[parametro])
+        valor = clip_between(valor, *rango)
         if w: #Es una lista vacía si no hubo warnings
             status = -2
     return status, valor
@@ -151,8 +153,8 @@ def view_foto(delay=None):
 def hacer_barrido(duracion, frec_i, frec_f):
     # Chequeo que los valores estén en el rango admitido
     status, frec_i = chequear_rango('frecuencia', frec_i)
-    status, frec_f = chequear_rango('frecuencia', frec_f, status)
-    #status, duracion = chequear_rango('duracion', duracion, status)
+    status, frec_f = chequear_rango('frecuencia', frec_f, status=status)
+    status, duracion = chequear_rango('duracion', duracion, status=status, rango=(0,60))
     try:
         dev.video(duracion)
         dev.sweep(duracion, frec_i, frec_f)
@@ -197,7 +199,7 @@ def sacar_fotos(frec_i, frec_f):
 
 
 @app.route('/ultima_foto')
-def ultima_foto(delay=None):
+def get_ultima_foto(delay=None):
 
     try:
         return send_file(nombres['foto'])
