@@ -70,7 +70,7 @@ def cambiar_valor(parametro, valor, status=0):
     return status, getattr(dev, parametro)
 
 
-def chequear_rango(parametro, valor, status=0, rango=None:
+def chequear_rango(parametro, valor, status=0, rango=None):
     '''Chequea que el valor dado es´té en el rango adecuado, según el 
     parámetro. Si no lo está, avisa usando status=-2 y lo mete en el
     rango adecuado.'''
@@ -135,7 +135,7 @@ def view_exposicion(valor=None):
 
 @app.route('/foto')
 def view_foto():
-    dev.snapshot(delay)
+    dev.snapshot()
     mandar = dict(file='foto',
                          tiempo_estimado=0,
                          unidades='segundos')
