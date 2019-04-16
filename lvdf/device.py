@@ -6,6 +6,9 @@ from queue import Queue, Empty
 from warnings import warn
 from os import listdir, remove
 
+#paro el streaming de la cámara al comienzo, hackfix
+run('sudo service motion stop') 
+
 rangos = {
     'frecuencia': (20, 2000), #Hz
     'amplitud': (.6, .96), #en escala [0,1]
@@ -64,7 +67,7 @@ class Oscilator:
     def __setattr__(self, name, value):
         #Me aseguro de que los valores que deen tener límite 
         #caigan en el rango adecuado
-        if name in rangos:
+        if name in rangos:  
             value = clip_between(value, *rangos[name])    
         super().__setattr__(name, value)
         if name in replay_when_changed and self.initialized:

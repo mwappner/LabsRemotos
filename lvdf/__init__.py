@@ -134,11 +134,7 @@ def view_exposicion(valor=None):
 
 
 @app.route('/foto')
-@app.route('/foto/<float:delay>')
-@app.route('/foto/<int:delay>')
-def view_foto(delay=None):
-    if not delay:
-        delay=1
+def view_foto():
     dev.snapshot(delay)
     mandar = dict(file='foto',
                          tiempo_estimado=0,
