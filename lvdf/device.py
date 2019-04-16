@@ -59,52 +59,6 @@ class ProcRunning:
             self.subprocess.kill()
 
 class Oscilator:
-<<<<<<< HEAD
-	'''A class containing the parameters of the device.'''
-
-	def __setattr__(self, name, value):
-		#Me aseguro de que los valores que deen tener límite 
-		#caigan en el rango adecuado
-		if name in rangos:
-			value = clip_between(value, *rangos[name])
-		super().__setattr__(name, value)
-
-	def __init__(self):
-		#Por default, arranca con los valores mínimos del
-		#rango permitido
-		for key, val in rangos.items():
-			self.__setattr__(key, val[0])
-		self.proc_running = ProcRunning()
-		self.ison = False
-		self.duracion = 300 #default de la duración es 5 minutos
-
-	def play(self):
-		#play with current values
-		command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
-		self.proc_running.run_new(command)
-
-	def sweep(self, time, freq_start, freq_end):
-		command = 'barrido.sh {} {} {}'.format(time, freq_start, freq_end)
-		self.proc_running.run_new(command)
-
-	def snapshot(self, delay):
-		command = 'raspistill -t {} -o static/cuerda.jpg'.format(delay)
-		run(command, block=False)
-
-	def change_freq(self, value):
-		self.frecuencia = value
-		self.play()
-
-	def change_duration(self, value):
-		self.duracion = value
-		self.play()
-
-	def change_amp(self, value):
-		self.amplitud = value
-
-	def change_phase(self, value):
-		self.fase = value
-=======
     '''A class containing the parameters of the device.'''
 
     def __setattr__(self, name, value):
@@ -217,5 +171,3 @@ class Oscilator:
         #inicializo y prendo el thread
         fotos_thread = Thread(target=accion)
         fotos_thread.start()
-        
->>>>>>> FurtherDev
