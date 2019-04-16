@@ -14,14 +14,14 @@ rangos = {
     'amplitud': (.6, .96), #en escala [0,1]
     'fase': (-180, 180), #grados
     'duracion': (0,36000), #segundos
-    'exposicion': (100, 5000000) #microsegundos
+    'exposicion': (10000, 5000000) #microsegundos
     }
 iniciales = {
     'frecuencia': 100, #Hz
     'amplitud': rangos['amplitud'][-1], #en escala [0,1]
     'fase': 0, #grados
     'duracion': rangos['duracion'][-1], #segundos
-    'exposicion': 100, #microsegundos
+    'exposicion': 30000, #microsegundos
     }
 replay_when_changed = ['frecuencia',
                        'amplitud',
