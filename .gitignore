@@ -10,6 +10,7 @@ dist/
 MANIFEST
 .tox
 *.h246
+*.zip
 
 # WebDAV file system cache files
 .DAV/
@@ -18,3 +19,8 @@ MANIFEST
 tags
 
 test/
+
+# carpetas con meidiones
+lvdf/timelapse/
+lvdf/static/
+lvdf/video/

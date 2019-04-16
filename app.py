@@ -1,5 +1,1 @@
-
-
-from lvdf import main
-
-main(debug=False)
+from lvdf import app
