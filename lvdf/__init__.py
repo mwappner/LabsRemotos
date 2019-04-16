@@ -1,16 +1,8 @@
-
-from flask import Flask, request, send_file, jsonify, Response
-<<<<<<< HEAD
-from . import device
-from time import sleep
-=======
-from .device import rangos, nombres, Oscilator, clip_between
-from threading import Timer
-from os import listdir, remove, path
+from os import listdir, remove, path, getcwd
 from zipfile import ZipFile
 from warnings import catch_warnings
-import os
->>>>>>> FurtherDev
+from flask import Flask, request, send_file, jsonify, Response
+from .device import rangos, nombres, Oscilator, clip_between
 
 
 app = Flask(__name__)
@@ -226,7 +218,7 @@ def get_video():
 @app.route('/getfotos')
 def get_fotos():
     base = dev.nombres['timelapse']
-    lista = [os.path.join(base, f) for f in os.listdir(base)]
+    lista = [path.join(base, f) for f in listdir(base)]
 
     if lista:
         dev.stop() #para que no siga creando fotos mientras intento mandarlas
@@ -256,7 +248,7 @@ def play():
 
 def main(debug=True, browser=False, port=5000):
     if debug:
-        print(os.getcwd())
+        print(getcwd())
 
     if browser:
         import threading, webbrowser
