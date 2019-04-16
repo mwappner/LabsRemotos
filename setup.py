@@ -10,7 +10,7 @@ setup(name='lvdf',
       author='Hernan Grecco',
       author_email='hernan.grecco@gmail.com',
       license='MIT License',
-      install_requires=['flask'],
+      install_requires=['flask', 'delegator.py'],
       classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

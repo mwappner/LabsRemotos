@@ -115,9 +115,9 @@ class Oscilator:
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
         self._debugrun(command)
 
-    def snapshot(self, delay, file=nombres['foto']):
-        command = 'raspistill -t {delay} -ss {shutterspeed} -o {file}'.format(
-                delay = delay, shutterspeed = self.exposicion, file = file)
+    def snapshot(self, file=nombres['foto']):
+        command = 'raspistill -ss {shutterspeed} -o {file}'.format(
+            shutterspeed = self.exposicion, file = file)
         run(command)
 
     def video(self, duration):
