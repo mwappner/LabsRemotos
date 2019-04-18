@@ -1,10 +1,12 @@
-from delegator import run
-from time import sleep
+from time import sleep, time
+from datetime.datetime import fromtimestamp 
 from numpy import linspace
 from threading import Thread
 from queue import Queue, Empty
 from warnings import warn
-from os import listdir, remove
+from os import listdir, remove, path
+from uuid import uuid4
+from delegator import run
 
 #paro el streaming de la cámara al comienzo, hackfix
 run('sudo service motion stop') 
@@ -29,9 +31,9 @@ replay_when_changed = ['frecuencia',
                        'duracion',
                        ]
 nombres = {
-    'video' : '/home/pi/jauretche/LabsRemotos/lvdf/video/filmacion.h264',
-    'foto' : '/home/pi/jauretche/LabsRemotos/lvdf/static/cuerda.jpg',
-    'timelapse' : '/home/pi/jauretche/LabsRemotos/lvdf/timelapse',
+    'video' : ('/home/pi/jauretche/LabsRemotos/lvdf/static/videos/', '.h264'),
+    'foto' : ('/home/pi/jauretche/LabsRemotos/lvdf/static/fotos/', '.jpg'),
+    'timelapse' : '/home/pi/jauretche/LabsRemotos/lvdf/staic/timelapses',
     }
 
 def clip_between(value, lower=0, upper=100):
@@ -45,6 +47,36 @@ def clip_between(value, lower=0, upper=100):
         warn('Value out of bounds', SyntaxWarning)
         return upper
     return value
+
+def utc_later(delay):
+    '''Devuelve la el tiempo UTC dentro de delay segundos.'''
+    return str(datetime.fromtimestamp(time()+delay))
+
+def nuevo_nombre(directorio, extension):
+    '''Devuelve un nuevo nombre unico de un archivo en el directorio y con
+    la extensión dados.'''
+    return path.join(directorio, uuid4().hex + extension)
+
+class DeleterQueue(Queue):
+    '''Una subclase de Queue que agrega una funcionalidad: cuando la cola se llena,
+    puede meter otro elemento, descartando el más antiguo. Además, ejecuta accion()
+    sobre el elemento descartado.'''
+    def __init__(self, *args, maxsize=3, accion=None, **kwargs):
+        #Accion es lo que se debe hacer cuando un elemento se cae de la cola
+        if accion is None:
+            def accion(*args, **kwargs):
+                pass
+        self.accion = accion
+        super().__init__(*args, maxsize=maxsize, **kwargs)
+        
+    def put(self, *args, **kwargs):
+        #Si está llena, saco uno y lo borro a mano
+        if self.full():
+           cosa = self.get()
+           self.accion(cosa)
+           
+        #Meto el nuevo
+        super().put(*args, **kwargs)
 
 class ProcRunning:
     '''A delegator subprocess with an extra layer to always run
@@ -86,6 +118,7 @@ class Oscilator:
         
         self.proc_running = ProcRunning()
         self.stopqueue = Queue()
+        self.filequeues = {k:DeleterQueue(accion=remove) for k in nombres}
 
 
     def _debugrun(self, command):
@@ -115,17 +148,22 @@ class Oscilator:
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
         self._debugrun(command)
 
-    def snapshot(self, file=nombres['foto']):
+    def snapshot(self, file=nuevo_nombre(*nombres['foto']), block=False):
         command = 'raspistill -ss {shutterspeed} -o {file}'.format(
             shutterspeed = self.exposicion, file = file)
-        run(command)
+        run(command, block=block)
+        self.filequeues['foto'].put(file)
+        return file
 
     def video(self, duration):
+        file = nuevo_nombre(*nombres['video'])
         command = ('raspivid -o {file} -w 960 -h 516 -roi 0,0.5,1,1 -fps 30 ' 
                    '-ex off -n -br 70 -co 50 -t {dur} -v&').format(
-                           file = nombres['video'],
+                           file = file,
                            dur = duration)
-        run(command)
+        run(command, block=False)
+        self.filequeues['video'].put(file)
+        return file
         
     def fotos(self, freq_start, freq_end):
         '''Barre cien frecuencais entre freq_start y freq_end. Saca una foto 
@@ -137,20 +175,18 @@ class Oscilator:
         #me guardo el estado actual del device
         d = self.__dict__.copy()
         
-        self.exposicion = 500000 #0.5 seg, en microsegundos
-        self.duracion = 1
+        self.duracion = 3
         self.amplitud = 1
         frecuencias = linspace(freq_start, freq_end, 100)
         
-        nombre = lambda freq: os.path.join(nombres['timelapse'],'{:.1f}Hz.jpg'.format(freq))
+        nombre = lambda freq: path.join(nombres['timelapse'],'{:.1f}Hz.jpg'.format(freq))
 
         #defino funcion a correr en el thread
         def accion():
             for f in frecuencias:
                 self.frecuencia = f #esto pone a andar por 1 segundo
-                sleep(0.25)
-                self.snapshot(1, nombre(f))
-                sleep(0.75)
+                sleep(0.1)
+                self.snapshot(1, nombre(f), block=True)
                 
                 #veo si me indicaron que pare
                 try:
@@ -170,7 +206,7 @@ class Oscilator:
 
         #vacío carpeta de fotos
         for f in os.listdir(nombres['timelapse']):
-            os.remove(os.path.join(nombres['timelapse'], f))
+            os.remove(path.join(nombres['timelapse'], f))
         #inicializo y prendo el thread
         fotos_thread = Thread(target=accion)
         fotos_thread.start()
