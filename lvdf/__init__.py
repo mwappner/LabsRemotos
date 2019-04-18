@@ -2,7 +2,7 @@ from os import listdir, remove, path, getcwd
 from zipfile import ZipFile
 from warnings import catch_warnings
 from flask import Flask, request, send_file, jsonify, Response
-from .device import rangos, nombres, Oscilator, clip_between
+from .device import rangos, nombres, Oscilator, clip_between, utc_later
 
 
 app = Flask(__name__)
@@ -135,10 +135,9 @@ def view_exposicion(valor=None):
 
 @app.route('/foto')
 def view_foto():
-    dev.snapshot()
-    mandar = dict(file='foto',
-                         tiempo_estimado=0,
-                         unidades='segundos')
+    file = dev.snapshot()
+    mandar = dict(file=file,
+                 tiempo_estimado=utc_later(10)) #lo hago esperar al menos diez segundos.
     return jsonify(status=0, valor=mandar)
 
 
@@ -152,11 +151,10 @@ def hacer_barrido(duracion, frec_i, frec_f):
     status, frec_f = chequear_rango('frecuencia', frec_f, status=status)
     status, duracion = chequear_rango('duracion', duracion, status=status, rango=(0,60))
     try:
-        dev.video(duracion)
+        file = dev.video(duracion)
         dev.sweep(duracion, frec_i, frec_f)
-        mandar = dict(file='video',
-                         tiempo_estimado=duracion,
-                         unidades='segundos',
+        mandar = dict(file=file,
+                         tiempo_estimado=utc_later(duracion),
                          barriendo_entre=[frec_i, frec_f])
         return jsonify(status=status, valor=mandar)
     except ValueError: #las frecuencias eran incompatibles
@@ -179,10 +177,9 @@ def sacar_fotos(frec_i, frec_f):
     status, frec_f = chequear_rango('frecuencia', frec_f, status)
 
     try:
-        dev.fotos(frec_i, frec_f)
-        mandar = dict(file='timelapse',
-                         tiempo_estimado=200, #mucho tiempo extra (debería tardar 100)
-                         unidades='segundos',
+        file = dev.fotos(frec_i, frec_f)
+        mandar = dict(file=file,
+                         tiempo_estimado=utc_later(200), #mucho tiempo extra (debería tardar 100)
                          barriendo_entre=[frec_i, frec_f])
         return jsonify(status=status, valor=mandar)
     except ValueError: #las frecuencias eran incompatibles

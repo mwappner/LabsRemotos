@@ -7,3 +7,5 @@ Cambiar página principal
 Reordenar carpetas (static> fotos, videos, timelapse)
 Tener dos running tasks: player y cámara
 Retocar control de shutterspeed
+
+Crear "documentación" en postman

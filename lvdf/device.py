@@ -4,7 +4,8 @@ from numpy import linspace
 from threading import Thread
 from queue import Queue, Empty
 from warnings import warn
-from os import listdir, remove, path
+from os import listdir, remove, path, makedirs
+from shutil import rmtree
 from uuid import uuid4
 from delegator import run
 
@@ -33,7 +34,7 @@ replay_when_changed = ['frecuencia',
 nombres = {
     'video' : ('/home/pi/jauretche/LabsRemotos/lvdf/static/videos/', '.h264'),
     'foto' : ('/home/pi/jauretche/LabsRemotos/lvdf/static/fotos/', '.jpg'),
-    'timelapse' : '/home/pi/jauretche/LabsRemotos/lvdf/staic/timelapses',
+    'timelapse' : ('/home/pi/jauretche/LabsRemotos/lvdf/staic/timelapses', ''),
     }
 
 def clip_between(value, lower=0, upper=100):
@@ -106,8 +107,6 @@ class Oscilator:
             self.play()
 
     def __init__(self, debug=False):
-        #Por default, arranca con los valores mínimos del
-        #rango permitido
         self.initialized = False
         
         for key, val in iniciales.items():
@@ -119,6 +118,7 @@ class Oscilator:
         self.proc_running = ProcRunning()
         self.stopqueue = Queue()
         self.filequeues = {k:DeleterQueue(accion=remove) for k in nombres}
+        self.filequeues['timelapse'].accion = rmtree #para timelapses necesito otra acción
 
 
     def _debugrun(self, command):
@@ -179,7 +179,10 @@ class Oscilator:
         self.amplitud = 1
         frecuencias = linspace(freq_start, freq_end, 100)
         
-        nombre = lambda freq: path.join(nombres['timelapse'],'{:.1f}Hz.jpg'.format(freq))
+        #creo carpeta donde voy a guardar el timelapse y una función para los archivos
+        nombre_base = nuevo_nombre(*nombres['timelapse'])
+        os.makedirs(nombre_base)
+        nombre = lambda freq: path.join(nombre_base,'{:.1f}Hz.jpg'.format(freq))
 
         #defino funcion a correr en el thread
         def accion():
@@ -210,3 +213,6 @@ class Oscilator:
         #inicializo y prendo el thread
         fotos_thread = Thread(target=accion)
         fotos_thread.start()
+
+        self.filequeues['timelapse'].put(nombre_base)
+        return nombre_base
