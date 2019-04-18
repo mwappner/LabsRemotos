@@ -21,6 +21,4 @@ tags
 test/
 
 # carpetas con meidiones
-lvdf/timelapse/
-lvdf/static/
-lvdf/video/
+# static/
