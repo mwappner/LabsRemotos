@@ -85,10 +85,10 @@ class ProcRunning:
     def __init__(self):
         self.subprocess = None
 
-    def run_new(self, command):
+    def run_new(self, command, block=False):
         #Kill prevoius process
         self.kill() #killing a dead subproc raises no error
-        self.subprocess = run(command, block=False)
+        self.subprocess = run(command, block=block)
 
     def kill(self):
         if not self.subprocess is None:
@@ -115,32 +115,36 @@ class Oscilator:
         self.initialized = True
         self._debug = debug
         
-        self.proc_running = ProcRunning()
-        self.stopqueue = Queue()
+        self.proc_running = dict(cam=ProcRunning(), sound=ProcRunning())
+
+        self.stopqueue = DeleterQueue(maxsize=1) #acepta cosas per guarda una sola
         self.filequeues = {k:DeleterQueue(accion=remove) for k in nombres}
         self.filequeues['timelapse'].accion = rmtree #para timelapses necesito otra acción
+
+        self._timestart = time()
 
 
     @property
     def ison(self):
         return self._timestart + self.duration > time()
 
-    def _debugrun(self, command):
+    def _debugrun(self, command, cat, **kwargs):
         if self._debug:
-            print(command)
+            print(cat, command)
         else:
-            self.proc_running.run_new(command)
+            self.proc_running[cat].run_new(command, **kwargs)
 
     def play(self):
         #play with current values
         self.stopqueue.put(1)
         run('amixer set PCM -- {}%'.format(self.amplitud*100))
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
-        self._debugrun(command)
+        self._debugrun(command, 'sound')
         self._timestart = time()
 
     def stop(self):
-        self.proc_running.kill()
+        for proc in self.proc_running.values():
+            proc.kill()
         self.stopqueue.put(1)
 
     def get_params(self):
@@ -151,12 +155,12 @@ class Oscilator:
             raise ValueError('Frecuencias incompatibles.')
         self.stopqueue.put(1)
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
-        self._debugrun(command)
+        self._debugrun(command, 'sound')
 
-    def snapshot(self, file=nuevo_nombre(*nombres['foto']), block=False):
+    def snapshot(self, file=nuevo_nombre(*nombres['foto']), **kwargs):
         command = 'raspistill -ss {shutterspeed} -o {file}'.format(
             shutterspeed = self.exposicion, file = file)
-        run(command, block=block)
+        self._debugrun(command, 'cam', **kwargs)
         self.filequeues['foto'].put(file)
         return file
 
@@ -166,7 +170,7 @@ class Oscilator:
                    '-ex off -n -br 70 -co 50 -t {dur} -v&').format(
                            file = file,
                            dur = duration)
-        run(command, block=False)
+        self._debugrun(command, 'cam')
         self.filequeues['video'].put(file)
         return file
         
@@ -186,7 +190,7 @@ class Oscilator:
         
         #creo carpeta donde voy a guardar el timelapse y una función para los archivos
         nombre_base = nuevo_nombre(*nombres['timelapse'])
-        os.makedirs(nombre_base)
+        makedirs(nombre_base)
         nombre = lambda freq: path.join(nombre_base,'{:.1f}Hz.jpg'.format(freq))
 
         #defino funcion a correr en el thread
@@ -203,18 +207,17 @@ class Oscilator:
                     continue
                 else:
                     break
+
+            #AGREGAR UN ELSE ZIP Y MODIFICAR ADECUADAMENTE __init__
             
             #vuelvo a los valores previos del device
             for name, value in d.items():
                 setattr(self, name, value)
         
         #vacío la cola por si acaso
-        while not self.stopqueue.empty():
+        if not self.stopqueue.empty():
             self.stopqueue.get(block=False)
 
-        #vacío carpeta de fotos
-        for f in os.listdir(nombres['timelapse']):
-            os.remove(path.join(nombres['timelapse'], f))
         #inicializo y prendo el thread
         fotos_thread = Thread(target=accion)
         fotos_thread.start()

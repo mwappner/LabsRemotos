@@ -4,5 +4,6 @@ Reordenar carpetas (static> fotos, videos, timelapse)
 Tener dos running tasks: player y cámara
 Retocar control de shutterspeed
 Insertar seguridad
+Tamaño máximo de la cola para barrido
 
 Crear "documentación" en postman
