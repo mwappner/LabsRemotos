@@ -2,7 +2,7 @@ from os import listdir, remove, path, getcwd
 from zipfile import ZipFile
 from warnings import catch_warnings
 from flask import Flask, request, send_file, jsonify, Response
-from .device import rangos, nombres, Oscilator, clip_between, utc_later
+from .device import rangos, Oscilator, clip_between, utc_later
 
 
 app = Flask(__name__)
@@ -157,6 +157,7 @@ def hacer_barrido(duracion, frec_i, frec_f):
                          tiempo_estimado=utc_later(duracion),
                          barriendo_entre=[frec_i, frec_f])
         return jsonify(status=status, valor=mandar)
+
     except ValueError: #las frecuencias eran incompatibles
         msg = ('Valores de frecuencias incompatibles. Tal vez frec_i={} igual o más grande que '
             'frec_f={}, o ambas fuera del rango permitido, en cuyo caso frec_i=frec_f.'
@@ -182,6 +183,7 @@ def sacar_fotos(frec_i, frec_f):
                          tiempo_estimado=utc_later(200), #mucho tiempo extra (debería tardar 100)
                          barriendo_entre=[frec_i, frec_f])
         return jsonify(status=status, valor=mandar)
+
     except ValueError: #las frecuencias eran incompatibles
         msg = ('Valores de frecuencias incompatibles. Tal vez frec_i={} igual o más grande que '
             'frec_f={}, o ambas fuera del rango permitido, en cuyo caso frec_i=frec_f.'
@@ -191,29 +193,28 @@ def sacar_fotos(frec_i, frec_f):
         return jsonify(status=-1, mensaje=msg)
 
 
-@app.route('/ultima_foto')
+@app.route('/ultima_foto/<path:file>')
 def get_ultima_foto(delay=None):
 
     try:
-        return send_file(nombres['foto'])
+        return send_file(file)
     except:
         msg = 'Archivo no existente.'
         return jsonify(status=-3, mensaje=msg)
 
 
-@app.route('/getvideo')
+@app.route('/getvideo/<path:file>')
 def get_video():
     try:
-        return send_file(nombres['video'])
+        return send_file(file)
     except:
         msg = 'Archivo no existente.'
         return jsonify(status=-3, mensaje=msg)
 
 
-@app.route('/getfotos')
+@app.route('/getfotos/<path:file>')
 def get_fotos():
-    base = dev.nombres['timelapse']
-    lista = [path.join(base, f) for f in listdir(base)]
+    lista = [path.join(file, f) for f in listdir(file)]
 
     if lista:
         dev.stop() #para que no siga creando fotos mientras intento mandarlas
