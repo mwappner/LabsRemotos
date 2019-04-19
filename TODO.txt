@@ -1,11 +1,8 @@
-Poner un timer para is_on
 Pasar la foto a otro thread para hacerlo non blocking
-Crear nombres únicos
-Hacer una cola que se autoborra de nombres de archivos
-En el barrido, sacar el sleep, usar el bloqueo de la cámara
 Cambiar página principal
 Reordenar carpetas (static> fotos, videos, timelapse)
 Tener dos running tasks: player y cámara
 Retocar control de shutterspeed
+Insertar seguridad
 
 Crear "documentación" en postman

@@ -121,6 +121,10 @@ class Oscilator:
         self.filequeues['timelapse'].accion = rmtree #para timelapses necesito otra acción
 
 
+    @property
+    def ison(self):
+        return self._timestart + self.duration > time()
+
     def _debugrun(self, command):
         if self._debug:
             print(command)
@@ -133,6 +137,7 @@ class Oscilator:
         run('amixer set PCM -- {}%'.format(self.amplitud*100))
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
         self._debugrun(command)
+        self._timestart = time()
 
     def stop(self):
         self.proc_running.kill()

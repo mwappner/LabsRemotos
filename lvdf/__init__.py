@@ -93,6 +93,11 @@ def view_parametros():
     return jsonify(status=0, valor=dev.get_params())
 
 
+@app.route('/encendido')
+def view_parametros():
+    return jsonify(status=0, valor=dev.ison)
+
+
 @app.route('/frecuencia')
 @app.route('/frecuencia/<float:valor>')
 @app.route('/frecuencia/<int:valor>')
