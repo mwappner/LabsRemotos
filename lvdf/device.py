@@ -61,12 +61,8 @@ def nuevo_nombre(directorio, extension):
 class DeleterQueue(Queue):
     '''Una subclase de Queue que agrega una funcionalidad: cuando la cola se llena,
     puede meter otro elemento, descartando el más antiguo. Además, ejecuta accion()
-    sobre el elemento descartado.'''
-    def __init__(self, *args, maxsize=3, accion=None, **kwargs):
-        #Accion es lo que se debe hacer cuando un elemento se cae de la cola
-        if accion is None:
-            def accion(*args, **kwargs):
-                pass
+    sobre el elemento descartado. Por defecto, accion() es hacer nada.'''
+    def __init__(self, *args, maxsize=3, accion=lambda *a, **k: None, **kwargs):
         self.accion = accion
         super().__init__(*args, maxsize=maxsize, **kwargs)
         
@@ -116,17 +112,34 @@ class Oscilator:
         self._debug = debug
         
         self.proc_running = dict(cam=ProcRunning(), sound=ProcRunning())
-
         self.stopqueue = DeleterQueue(maxsize=1) #acepta cosas per guarda una sola
+
         self.filequeues = {k:DeleterQueue(accion=remove) for k in nombres}
         self.filequeues['timelapse'].accion = rmtree #para timelapses necesito otra acción
+        self._existentes() #inicializo las colas con los archivos existentes
 
-        self._timestart = time()
+        self._timestart_sound = time() #la primera vez, is_on no va a dar bien, pero por lo menos no tira error.
+        self._timestart_cam = time()
 
+    def _existentes(self):
+        #Inicializo las colas con los archivos existentes, ordenados
+        for cat, cola in self.filequeues.items():
+            #Recupero archivos, ordenados por fecha de creación
+            base = nombres[cat][0]
+            contenido = [path.join(base,f) for f in listdir(base)]
+            contenido.sort(key=lambda f:path.getmtime(f))
+            
+            #Meto todos los archivos en la cola correspondiente
+            for c in contenido:
+                cola.put(c)
 
     @property
-    def ison(self):
-        return self._timestart + self.duration > time()
+    def ison_sound(self):
+        return self._timestart_sound + self.duration > time()
+
+    @property
+    def ison_cam(self):
+        return self._timestart_cam + self.duration > time()
 
     def _debugrun(self, command, cat, **kwargs):
         if self._debug:
