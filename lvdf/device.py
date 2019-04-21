@@ -68,6 +68,10 @@ class Oscilator:
         self._timestart_cam = time()
 
     def _existentes(self):
+        #Si estoy en modo debug, no cargo los archivos (suele ser en otro SO)
+        if self._debug:
+            return
+
         #Inicializo las colas con los archivos existentes, ordenados
         for cat, cola in self.filequeues.items():
             #Recupero archivos, ordenados por fecha de creación
@@ -83,9 +87,9 @@ class Oscilator:
     def ison_sound(self):
         return self._timestart_sound + self.duration > time()
 
-    @property
-    def ison_cam(self):
-        return self._timestart_cam + self.duration > time()
+#    @property
+#    def ison_cam(self):
+#        return self._timestart_cam + self.duration > time()
 
     def _debugrun(self, command, cat, **kwargs):
         if self._debug:

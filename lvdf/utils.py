@@ -1,4 +1,4 @@
-from datetime.datetime import fromtimestamp
+from datetime import datetime
 from time import time
 from queue import Queue
 from warnings import warn
@@ -20,7 +20,7 @@ def clip_between(value, lower=0, upper=100):
 
 def utc_later(delay):
     '''Devuelve la el tiempo UTC dentro de delay segundos.'''
-    return str(fromtimestamp(time()+delay))
+    return str(datetime.fromtimestamp(time()+delay))
 
 def nuevo_nombre(directorio, extension):
     '''Devuelve un nuevo nombre unico de un archivo en el directorio y con

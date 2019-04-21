@@ -37,7 +37,7 @@ SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 #                             {'WWWAuthenticate': 'Basic realm="Login Required"'})
 #     return decorated_function
 
-dev = Oscilator(debug=False)
+dev = Oscilator(debug=True)
 
 
 @app.route('/')
@@ -95,7 +95,7 @@ def view_parametros():
 
 
 @app.route('/encendido')
-def view_parametros():
+def view_encendido():
     return jsonify(status=0, valor=dev.ison)
 
 
