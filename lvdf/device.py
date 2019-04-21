@@ -1,13 +1,11 @@
 from time import sleep, time
-from datetime.datetime import fromtimestamp 
 from numpy import linspace
 from threading import Thread
-from queue import Queue, Empty
-from warnings import warn
 from os import listdir, remove, path, makedirs
 from shutil import rmtree
-from uuid import uuid4
+from queue import Empty
 from delegator import run
+from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre
 
 #paro el streaming de la cámara al comienzo, hackfix
 run('sudo service motion stop') 
@@ -37,58 +35,6 @@ nombres = {
     'timelapse' : ('/home/pi/jauretche/LabsRemotos/lvdf/staic/timelapses', ''),
     }
 
-def clip_between(value, lower=0, upper=100):
-    '''Clips value to the (lower, upper) interval, i.e. if value
-    is less than lower, it return lower, if its grater than upper,
-    it return upper, else, it returns value unchanged.'''
-    if value<lower:
-        warn('Value out of bounds', SyntaxWarning)
-        return lower
-    if value>upper:
-        warn('Value out of bounds', SyntaxWarning)
-        return upper
-    return value
-
-def utc_later(delay):
-    '''Devuelve la el tiempo UTC dentro de delay segundos.'''
-    return str(datetime.fromtimestamp(time()+delay))
-
-def nuevo_nombre(directorio, extension):
-    '''Devuelve un nuevo nombre unico de un archivo en el directorio y con
-    la extensión dados.'''
-    return path.join(directorio, uuid4().hex + extension)
-
-class DeleterQueue(Queue):
-    '''Una subclase de Queue que agrega una funcionalidad: cuando la cola se llena,
-    puede meter otro elemento, descartando el más antiguo. Además, ejecuta accion()
-    sobre el elemento descartado. Por defecto, accion() es hacer nada.'''
-    def __init__(self, *args, maxsize=3, accion=lambda *a, **k: None, **kwargs):
-        self.accion = accion
-        super().__init__(*args, maxsize=maxsize, **kwargs)
-        
-    def put(self, *args, **kwargs):
-        #Si está llena, saco uno y lo borro a mano
-        if self.full():
-           cosa = self.get()
-           self.accion(cosa)
-           
-        #Meto el nuevo
-        super().put(*args, **kwargs)
-
-class ProcRunning:
-    '''A delegator subprocess with an extra layer to always run
-    non blocking mode and always run only one thing at a time.'''
-    def __init__(self):
-        self.subprocess = None
-
-    def run_new(self, command, block=False):
-        #Kill prevoius process
-        self.kill() #killing a dead subproc raises no error
-        self.subprocess = run(command, block=block)
-
-    def kill(self):
-        if not self.subprocess is None:
-            self.subprocess.kill()
 
 class Oscilator:
     '''A class containing the parameters of the device.'''
@@ -99,16 +45,16 @@ class Oscilator:
         if name in rangos:  
             value = clip_between(value, *rangos[name])    
         super().__setattr__(name, value)
-        if name in replay_when_changed and self.initialized:
+        if name in replay_when_changed and self._initialized:
             self.play()
 
     def __init__(self, debug=False):
-        self.initialized = False
+        self._initialized = False
         
         for key, val in iniciales.items():
             self.__setattr__(key, val)
         
-        self.initialized = True
+        self._initialized = True
         self._debug = debug
         
         self.proc_running = dict(cam=ProcRunning(), sound=ProcRunning())

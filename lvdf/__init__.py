@@ -2,7 +2,8 @@ from os import listdir, remove, path, getcwd
 from zipfile import ZipFile
 from warnings import catch_warnings
 from flask import Flask, request, send_file, jsonify, Response
-from .device import rangos, Oscilator, clip_between, utc_later
+from .device import rangos, Oscilator, clip_between
+from .utils import utc_later
 
 
 app = Flask(__name__)
