@@ -96,7 +96,12 @@ def view_parametros():
 
 @app.route('/encendido')
 def view_encendido():
-    return jsonify(status=0, valor=dev.ison)
+    return jsonify(status=0, valor=dev.ison_sound)
+
+
+#@app.route('/enuso_camara')
+#def view_camara():
+#    return jsonify(status=0, valor=dev.ison_cam)
 
 
 @app.route('/frecuencia')

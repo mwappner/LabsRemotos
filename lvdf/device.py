@@ -7,8 +7,6 @@ from queue import Empty
 from delegator import run
 from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre
 
-#paro el streaming de la cámara al comienzo, hackfix
-run('sudo service motion stop') 
 
 rangos = {
     'frecuencia': (20, 2000), #Hz
@@ -56,7 +54,11 @@ class Oscilator:
         
         self._initialized = True
         self._debug = debug
-        
+        #paro el streaming de la cámara al comienzo, hackfix
+        if not debug:
+            run('sudo service motion stop', block=False) 
+
+
         self.proc_running = dict(cam=ProcRunning(), sound=ProcRunning())
         self.stopqueue = DeleterQueue(maxsize=1) #acepta cosas per guarda una sola
 
@@ -85,7 +87,7 @@ class Oscilator:
 
     @property
     def ison_sound(self):
-        return self._timestart_sound + self.duration > time()
+        return self._timestart_sound + self.duracion > time()
 
 #    @property
 #    def ison_cam(self):
