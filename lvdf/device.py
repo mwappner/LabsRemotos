@@ -32,7 +32,7 @@ replay_when_changed = ['frecuencia',
 nombres = {
     'video' : ('/home/pi/jauretche/LabsRemotos/lvdf/static/videos/', '.h264'),
     'foto' : ('/home/pi/jauretche/LabsRemotos/lvdf/static/fotos/', '.jpg'),
-    'timelapse' : ('/home/pi/jauretche/LabsRemotos/lvdf/staic/timelapses', ''),
+    'timelapse' : ('/home/pi/jauretche/LabsRemotos/lvdf/staic/timelapses/', ''),
     }
 
 
@@ -65,7 +65,8 @@ class Oscilator:
         self._existentes() #inicializo las colas con los archivos existentes
 
         self._timestart_sound = time() #la primera vez, is_on no va a dar bien, pero por lo menos no tira error.
-        self._timestart_cam = time()
+        self._isplaying = False
+        #self._timestart_cam = time()
 
     def _existentes(self):
         #Si estoy en modo debug, no cargo los archivos (suele ser en otro SO)
@@ -85,7 +86,7 @@ class Oscilator:
 
     @property
     def ison_sound(self):
-        return self._timestart_sound + self.duration > time()
+        return self._timestart_sound + self.duracion > time() and self._isplaying
 
 #    @property
 #    def ison_cam(self):
@@ -103,12 +104,14 @@ class Oscilator:
         run('amixer set PCM -- {}%'.format(self.amplitud*100))
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
         self._debugrun(command, 'sound')
-        self._timestart = time()
+        self._timestart_sound = time()
+        self._isplaying = True
 
     def stop(self):
         for proc in self.proc_running.values():
             proc.kill()
         self.stopqueue.put(1)
+        self._isplaying = False
 
     def get_params(self):
         return {k:getattr(self, k) for k in rangos}
@@ -125,7 +128,7 @@ class Oscilator:
             shutterspeed = self.exposicion, file = file)
         self._debugrun(command, 'cam', **kwargs)
         self.filequeues['foto'].put(file)
-        return file
+        return path.basename(file)
 
     def video(self, duration):
         file = nuevo_nombre(*nombres['video'])
@@ -135,7 +138,7 @@ class Oscilator:
                            dur = duration)
         self._debugrun(command, 'cam')
         self.filequeues['video'].put(file)
-        return file
+        return path.basename(file)
         
     def fotos(self, freq_start, freq_end):
         '''Barre cien frecuencais entre freq_start y freq_end. Saca una foto 
@@ -186,4 +189,4 @@ class Oscilator:
         fotos_thread.start()
 
         self.filequeues['timelapse'].put(nombre_base)
-        return nombre_base
+        return path.basename(nombre_base)

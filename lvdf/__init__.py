@@ -2,7 +2,7 @@ from os import listdir, remove, path, getcwd
 from zipfile import ZipFile
 from warnings import catch_warnings
 from flask import Flask, request, send_file, jsonify, Response
-from .device import rangos, Oscilator, clip_between
+from .device import rangos, nombres, Oscilator, clip_between
 from .utils import utc_later
 
 
@@ -96,7 +96,7 @@ def view_parametros():
 
 @app.route('/encendido')
 def view_encendido():
-    return jsonify(status=0, valor=dev.ison)
+    return jsonify(status=0, valor=dev.ison_sound)
 
 
 @app.route('/frecuencia')
@@ -199,28 +199,33 @@ def sacar_fotos(frec_i, frec_f):
         return jsonify(status=-1, mensaje=msg)
 
 
-@app.route('/ultima_foto/<path:file>')
-def get_ultima_foto(delay=None):
+@app.route('/getfoto/<path:file>')
+def get_ultima_foto(file):
 
     try:
-        return send_file(file)
-    except:
-        msg = 'Archivo no existente.'
+        return send_file(path.join(nombres['foto'][0],file))
+    except FileNotFoundError:
+        msg = 'Archivo {} no existente.'.format(file)
         return jsonify(status=-3, mensaje=msg)
 
 
 @app.route('/getvideo/<path:file>')
-def get_video():
+def get_video(file):
     try:
-        return send_file(file)
-    except:
-        msg = 'Archivo no existente.'
+        return send_file(path.join(nombres['video'][0],file))
+    except FileNotFoundError:
+        msg = 'Archivo {} no existente.'.format(file)
         return jsonify(status=-3, mensaje=msg)
 
 
 @app.route('/getfotos/<path:file>')
-def get_fotos():
-    lista = [path.join(file, f) for f in listdir(file)]
+def get_fotos(file):
+    file = path.join(nombres['timelapse'][0], file)
+    try:
+        lista = [path.join(file, f) for f in listdir(file)]
+    except FileNotFoundError:
+        msg = 'Archivo {} no existente.'.format(file)
+        return jsonify(status=-3, mensaje=msg)
 
     if lista:
         dev.stop() #para que no siga creando fotos mientras intento mandarlas
