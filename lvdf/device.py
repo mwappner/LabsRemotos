@@ -14,14 +14,14 @@ rangos = {
     'frecuencia': (20, 2000), #Hz
     'amplitud': (.6, .96), #en escala [0,1]
     'fase': (-180, 180), #grados
-    'duracion': (0,36000), #segundos
+    'duracion': (0,3600), #segundos
     'exposicion': (10000, 5000000) #microsegundos
     }
 iniciales = {
     'frecuencia': 100, #Hz
     'amplitud': rangos['amplitud'][-1], #en escala [0,1]
     'fase': 0, #grados
-    'duracion': rangos['duracion'][-1], #segundos
+    'duracion': 1800, #segundos
     'exposicion': 30000, #microsegundos
     }
 replay_when_changed = ['frecuencia',
@@ -164,7 +164,7 @@ class Oscilator:
             for f in frecuencias:
                 self.frecuencia = f #esto pone a andar por 1 segundo
                 sleep(0.1)
-                self.snapshot(1, nombre(f), block=True)
+                self.snapshot(nombre(f), block=True)
                 
                 #veo si me indicaron que pare
                 try:
@@ -174,7 +174,7 @@ class Oscilator:
                 else:
                     break
 
-            #AGREGAR UN ELSE ZIP Y MODIFICAR ADECUADAMENTE __init__
+            #AGREGAR UN ELSE ZIP Y MODIFICAR ADECUADAMENTE __init__.py
             
             #vuelvo a los valores previos del device
             for name, value in d.items():
