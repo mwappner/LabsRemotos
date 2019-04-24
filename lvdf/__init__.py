@@ -5,14 +5,38 @@ from flask import Flask, request, send_file, jsonify, Response
 from .device import rangos, nombres, Oscilator, clip_between
 from .utils import utc_later
 
+# Som settings
+dev_debugmode = True
+security_required = True
+# status_key = {0:'Todo OK', -1:'Valor inválido', -2:'Valor fuera de rango', -3:'Archivo inexistente'}
 
+
+# Create flask app
 app = Flask(__name__)
 
 API_KEY = '17a1240802ec4726fe6c8e174d144dbe3b5c4d05'
 SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 
- # status_key = {0:'Todo OK', -1:'Valor inválido', -2:'Valor fuera de rango, -3:'Archivo inexistente'}
+# Security stuff
+if security_required:
+   from flask_jwt_extended import JWTManager, jwt_required
 
+   app.config['JWT_SECRET_KEY'] = 'super-secret' #change this
+
+   jwt = JWTManager(app)
+   
+   @jwt.expired_token_loader
+   def my_expired_token_callback(expired_token):
+      token_type = expired_token['type']
+      return jsonify({
+         'status': 401,
+         'sub_status': 42,
+         'msg': 'The {} token has expired'.format(token_type)
+      }), 401
+
+else:
+   def jwt_required(func):
+      return func
 
 # def require_api_key(view_function):
 #     @wraps(view_function)
@@ -37,7 +61,7 @@ SESSION_TOKEN = '9363191fb9f973f9af3b0d1951b569ddbf3eacb2'
 #                             {'WWWAuthenticate': 'Basic realm="Login Required"'})
 #     return decorated_function
 
-dev = Oscilator(debug=True)
+dev = Oscilator(debug=dev_debugmode)
 
 
 @app.route('/')
@@ -107,6 +131,7 @@ def view_encendido():
 @app.route('/frecuencia')
 @app.route('/frecuencia/<float:valor>')
 @app.route('/frecuencia/<int:valor>')
+@jwt_required
 def view_frecuencia(valor=None):
     status, valor_salida = cambiar_valor('frecuencia', valor)
     return jsonify(status=status, valor=valor_salida)
@@ -115,6 +140,7 @@ def view_frecuencia(valor=None):
 @app.route('/fase')
 @app.route('/fase/<float:valor>')
 @app.route('/fase/<int:valor>')
+@jwt_required
 def view_fase(valor=None):
     status, valor_salida = cambiar_valor('fase', valor)
     return jsonify(status=status, valor=valor_salida)
@@ -123,6 +149,7 @@ def view_fase(valor=None):
 @app.route('/amplitud')
 @app.route('/amplitud/<float:valor>')
 @app.route('/amplitud/<int:valor>')
+@jwt_required
 def view_amplitud(valor=None):
     status, valor_salida = cambiar_valor('amplitud', valor)
     return jsonify(status=status, valor=valor_salida)
@@ -131,6 +158,7 @@ def view_amplitud(valor=None):
 @app.route('/duracion')
 @app.route('/duracion/<float:valor>')
 @app.route('/duracion/<int:valor>')
+@jwt_required
 def view_duracion(valor=None):
     status, valor_salida = cambiar_valor('duracion', valor)
     return jsonify(status=status, valor=valor_salida)
@@ -139,12 +167,14 @@ def view_duracion(valor=None):
 @app.route('/exposicion')
 @app.route('/exposicion/<float:valor>')
 @app.route('/exposicion/<int:valor>')
+@jwt_required
 def view_exposicion(valor=None):
     status, valor_salida = cambiar_valor('exposicion', valor)
     return jsonify(status=status, valor=valor_salida)
 
 
 @app.route('/foto')
+@jwt_required
 def view_foto():
     file = dev.snapshot()
     mandar = dict(file=file,
@@ -156,6 +186,7 @@ def view_foto():
 @app.route('/barrido/<int:duracion>/<float:frec_i>/<int:frec_f>')
 @app.route('/barrido/<int:duracion>/<int:frec_i>/<float:frec_f>')
 @app.route('/barrido/<int:duracion>/<float:frec_i>/<float:frec_f>')
+@jwt_required
 def hacer_barrido(duracion, frec_i, frec_f):
     # Chequeo que los valores estén en el rango admitido
     status, frec_i = chequear_rango('frecuencia', frec_i)
@@ -182,6 +213,7 @@ def hacer_barrido(duracion, frec_i, frec_f):
 @app.route('/fotos/<int:frec_i>/<float:frec_f>')
 @app.route('/fotos/<float:frec_i>/<int:frec_f>')
 @app.route('/fotos/<float:frec_i>/<float:frec_f>')
+@jwt_required
 def sacar_fotos(frec_i, frec_f):
 
     # Chequeo que los valores estén en el rango admitido
@@ -205,6 +237,7 @@ def sacar_fotos(frec_i, frec_f):
 
 
 @app.route('/getfoto/<path:file>')
+@jwt_required
 def get_ultima_foto(file):
 
     try:
@@ -215,6 +248,7 @@ def get_ultima_foto(file):
 
 
 @app.route('/getvideo/<path:file>')
+@jwt_required
 def get_video(file):
     try:
         return send_file(path.join(nombres['video'][0],file))
@@ -224,6 +258,7 @@ def get_video(file):
 
 
 @app.route('/getfotos/<path:file>')
+@jwt_required
 def get_fotos(file):
     file = path.join(nombres['timelapse'][0], file)
     try:
@@ -247,12 +282,14 @@ def get_fotos(file):
 
 
 @app.route('/stop')
+@jwt_required
 def stop():
     dev.stop()
     return jsonify(status=0)
 
 
 @app.route('/play')
+@jwt_required
 def play():
     dev.play()
     return jsonify(status=0)
