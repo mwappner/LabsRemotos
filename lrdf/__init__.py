@@ -14,28 +14,29 @@ security_required = os.environ.get('SECURITY', 'NO') =='YES'
 # Create flask app
 app = Flask(__name__)
 
-# Security stuff
-if security_required:
-   from flask_jwt_extended import JWTManager, jwt_required
-
-   app.config['JWT_SECRET_KEY'] = 'super-secret' #change this
-
-   jwt = JWTManager(app)
-   
-   @jwt.expired_token_loader
-   def my_expired_token_callback(expired_token):
-      token_type = expired_token['type']
-      return jsonify({
-         'status': 401,
-         'sub_status': 42,
-         'msg': 'The {} token has expired'.format(token_type)
-      }), 401
-
-else:
-   def jwt_required(func):
-      return func
-
 dev = Oscilator(debug=dev_dryrun)
+
+# Security stuff. If no key is given as environment variable, check will be skipped.
+key = os.environ('JWT_SECRET_KEY', None)
+
+if if kwy is None:
+    def jwt_required(func):
+        return func
+else:
+    from flask_jwt_extended import JWTManager, jwt_required
+
+    app.config['JWT_SECRET_KEY'] = os.environ('JWT_SECRET_KEY','') #change this
+
+    jwt = JWTManager(app)
+   
+    @jwt.expired_token_loader
+    def my_expired_token_callback(expired_token):
+        token_type = expired_token['type']
+        return jsonify({
+            'status': 401,
+            'sub_status': 42,
+            'msg': 'The {} token has expired'.format(token_type)
+            }), 401
 
 
 @app.route('/')

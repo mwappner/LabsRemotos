@@ -1,9 +1,10 @@
 from time import sleep, time
 from numpy import linspace
 from threading import Thread
-from os import listdir, remove, path, makedirs
+from os import listdir, remove, path, makedirs, environ
 from shutil import rmtree
 from queue import Empty
+from pathlib import Path
 from delegator import run
 from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre, toggle_streaming_concatenar
 
@@ -15,6 +16,7 @@ rangos = {
     'duracion': (0,3600), #segundos
     'exposicion': (10000, 5000000) #microsegundos
     }
+
 iniciales = {
     'frecuencia': 100, #Hz
     'amplitud': rangos['amplitud'][-1], #en escala [0,1]
@@ -22,20 +24,25 @@ iniciales = {
     'duracion': 1800, #segundos
     'exposicion': 30000, #microsegundos
     }
-replay_when_changed = ['frecuencia',
-                       'amplitud',
-                       #'fase',
-                       'duracion',
-                       ]
 
-#construye rutas completas donde guardar cada tipo de archivo
-constructor = lambda name: path.join('/home/pi/jauretche/LabsRemotos/lvdf/static', name)
+replay_when_changed = (
+    'frecuencia',
+    'amplitud',
+    #'fase',
+    'duracion',
+    )
+
+# Construye rutas completas donde guardar cada tipo de archivo
+store_directory = os.environ['STORE_FOLDER']
+constructor = lambda name: path.join(store_directory, name)
 nombres = {
     'video' : (constructor('videos/'), '.h264'),
     'foto' : (constructor('fotos/'), '.jpg'),
     'timelapse' : (constructor('timelapses/'), ''),
     }
-
+# Si no existen las carpetas, las crea
+for d in nombres:
+    Path(d).touch()
 
 class Oscilator:
     '''A class containing the parameters of the device.'''
@@ -49,14 +56,14 @@ class Oscilator:
         if name in replay_when_changed and self._initialized:
             self.play()
 
-    def __init__(self, debug=False):
+    def __init__(self, dryrun=False):
         self._initialized = False
         
         for key, val in iniciales.items():
             self.__setattr__(key, val)
         
         self._initialized = True
-        self._debug = debug
+        self._dryrun = dryrun
 
 #        #paro el streaming de la cámara al comienzo, hackfix
 #        if not debug:
@@ -75,8 +82,8 @@ class Oscilator:
         #self._timestart_cam = time()
 
     def _existentes(self):
-        #Si estoy en modo debug, no cargo los archivos (suele ser en otro SO)
-        if self._debug:
+        #Si estoy en modo dryrun, no cargo los archivos (suele ser en otro SO)
+        if self._dryrun:
             return
 
         #Inicializo las colas con los archivos existentes, ordenados
@@ -98,8 +105,8 @@ class Oscilator:
 #    def ison_cam(self):
 #        return self._timestart_cam + self.duration > time()
 
-    def _debugrun(self, command, cat, **kwargs):
-        if self._debug:
+    def _dryrunrun(self, command, cat, **kwargs):
+        if self._dryrun:
             print(cat, command)
         else:
             self.proc_running[cat].run_new(command, **kwargs)
@@ -109,7 +116,7 @@ class Oscilator:
         self.stopqueue.put(1)
         run('amixer set PCM -- {}%'.format(self.amplitud*100))
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
-        self._debugrun(command, 'sound')
+        self._dryrunrun(command, 'sound')
         self._timestart_sound = time()
         self._isplaying = True
 
@@ -127,13 +134,13 @@ class Oscilator:
             raise ValueError('Frecuencias incompatibles.')
         self.stopqueue.put(1)
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
-        self._debugrun(command, 'sound')
+        self._dryrunrun(command, 'sound')
 
     def snapshot(self, file=nuevo_nombre(*nombres['foto']), **kwargs):
         command = 'raspistill -ss {shutterspeed} -o {file}'.format(
             shutterspeed = self.exposicion, file = file)
         command = toggle_streaming_concatenar(command)
-        self._debugrun(command, 'cam', **kwargs)
+        self._dryrunrun(command, 'cam', **kwargs)
         self.filequeues['foto'].put(file)
         return path.basename(file)
 
@@ -144,7 +151,7 @@ class Oscilator:
                            file = file,
                            dur = duration)
         command = toggle_streaming_concatenar(command)
-        self._debugrun(command, 'cam')
+        self._dryrunrun(command, 'cam')
         self.filequeues['video'].put(file)
         return path.basename(file)
         
