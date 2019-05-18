@@ -1,4 +1,1 @@
-Cambiar página principal
-Reordenar carpetas (static> fotos, videos, timelapse)
-Retocar control de shutterspeed
-Insertar seguridad
+﻿Retocar control de shutterspeed
