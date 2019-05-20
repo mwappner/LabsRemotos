@@ -1,7 +1,7 @@
 from time import sleep, time
 from numpy import linspace
 from threading import Thread
-from os import listdir, remove, path, makedirs, environ
+from os import listdir, remove, path, makedirs, getenv
 from shutil import rmtree
 from queue import Empty
 from pathlib import Path
@@ -33,7 +33,7 @@ replay_when_changed = (
     )
 
 # Construye rutas completas donde guardar cada tipo de archivo
-store_directory = os.environ['STORE_FOLDER']
+store_directory = getenv('STORE_FOLDER', '/home/pi/lrdf_use/temporary')
 constructor = lambda name: path.join(store_directory, name)
 nombres = {
     'video' : (constructor('videos/'), '.h264'),

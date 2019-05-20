@@ -1,25 +1,23 @@
-from os import listdir, remove, path, getcwd, environ
+from os import listdir, remove, path, getcwd, getenv
 from zipfile import ZipFile
 from warnings import catch_warnings
 from flask import Flask, request, send_file, jsonify, Response
 from .device import rangos, nombres, Oscilator, clip_between
 from .utils import utc_later
 
-# Some settings taken from environment variables
-dev_dryrun = os.environ.get('DRYRUN', 'NO') =='YES'
-security_required = os.environ.get('SECURITY', 'NO') =='YES'
 # status_key = {0:'Todo OK', -1:'Valor inválido', -2:'Valor fuera de rango', -3:'Archivo inexistente'}
 
+# Some settings taken from environment variables
+dev_dryrun = getenv('DRYRUN', 'YES') =='YES'
+dev = Oscilator(dryrun=dev_dryrun)
 
 # Create flask app
 app = Flask(__name__)
 
-dev = Oscilator(debug=dev_dryrun)
-
 # Security stuff. If no key is given as environment variable, check will be skipped.
-key = os.environ('JWT_SECRET_KEY', None)
+key = getenv('JWT_SECRET_KEY') #defaults to None
 
-if if kwy is None:
+if key is None:
     def jwt_required(func):
         return func
 else:
