@@ -4,9 +4,9 @@
 
 from setuptools import setup, find_packages
 
-setup(name='lvdf',
-      description='lvdf',
-      version='0.1',
+setup(name='lrdf',
+      description='lrdf',
+      version='0.2',
       author='Hernan Grecco',
       author_email='hernan.grecco@gmail.com',
       license='MIT License',
