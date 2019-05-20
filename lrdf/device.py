@@ -1,12 +1,11 @@
 from time import sleep, time
-from numpy import linspace
 from threading import Thread
 from os import listdir, remove, path, makedirs, getenv
 from shutil import rmtree
 from queue import Empty
 from pathlib import Path
 from delegator import run
-from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre, toggle_streaming_concatenar
+from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre, toggle_streaming_concatenar, linspace
 
 
 rangos = {

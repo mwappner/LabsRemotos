@@ -23,7 +23,7 @@ if key is None:
 else:
     from flask_jwt_extended import JWTManager, jwt_required
 
-    app.config['JWT_SECRET_KEY'] = os.environ('JWT_SECRET_KEY','') #change this
+    app.config['JWT_SECRET_KEY'] = getenv('JWT_SECRET_KEY','') #change this
 
     jwt = JWTManager(app)
    
