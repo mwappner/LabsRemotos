@@ -3,7 +3,6 @@ from threading import Thread
 from os import listdir, remove, path, makedirs, getenv
 from shutil import rmtree
 from queue import Empty
-from pathlib import Path
 from delegator import run
 from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre, toggle_streaming_concatenar, linspace
 
@@ -35,13 +34,13 @@ replay_when_changed = (
 store_directory = getenv('STORE_FOLDER', '/home/pi/lrdf_use/temporary')
 constructor = lambda name: path.join(store_directory, name)
 nombres = {
-    'video' : (constructor('videos/'), '.h264'),
-    'foto' : (constructor('fotos/'), '.jpg'),
-    'timelapse' : (constructor('timelapses/'), ''),
+    'video' : (constructor('videos'), '.h264'),
+    'foto' : (constructor('fotos'), '.jpg'),
+    'timelapse' : (constructor('timelapses'), ''),
     }
 # Si no existen las carpetas, las crea
 for d in nombres:
-    Path(d).touch()
+    makedirs('d', exist_ok=True)
 
 class Oscilator:
     '''A class containing the parameters of the device.'''
