@@ -161,7 +161,7 @@ class Oscilator:
     def live(self,):
         file = nuevo_nombre(*nombres['live'])
         command = ('raspistill -o {file}').format(file=file)
-        self._dryrunrun(command, block=True)
+        self._dryrunrun(command, 'cam', block=True)
         return file
 
     def fotos(self, freq_start, freq_end):

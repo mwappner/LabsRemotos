@@ -39,7 +39,7 @@ else:
 
 @app.route('/')
 def index():
-    return 'LRDF v2019-5-17'
+    return 'LRDF v2019-5-21'
 
 
 def cambiar_valor(parametro, valor, status=0):
