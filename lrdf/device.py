@@ -40,7 +40,7 @@ nombres = {
     'live' : (constructor('live'), '.jpg'),
     }
 # Si no existen las carpetas, las crea
-for d in nombres.values():
+for d, _ in nombres.values():
     makedirs('d', exist_ok=True)
 
 class Oscilator:
