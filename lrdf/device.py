@@ -37,9 +37,10 @@ nombres = {
     'video' : (constructor('videos'), '.h264'),
     'foto' : (constructor('fotos'), '.jpg'),
     'timelapse' : (constructor('timelapses'), ''),
+    'live' : (constructor('live'), '.jpg'),
     }
 # Si no existen las carpetas, las crea
-for d in nombres:
+for d in nombres.values():
     makedirs('d', exist_ok=True)
 
 class Oscilator:
@@ -134,10 +135,14 @@ class Oscilator:
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
         self._dryrunrun(command, 'sound')
 
-    def snapshot(self, file=nuevo_nombre(*nombres['foto']), **kwargs):
+    def snapshot(self, file='', **kwargs):
+        '''Takes a single snapshot and returns a filename under which the picture taken will 
+        be saved.'''
+        # Assign given name. If no name was given, assign deffault
+        file = file or nuevo_nombre(*nombres['foto'])
         command = 'raspistill -ss {shutterspeed} -o {file}'.format(
             shutterspeed = self.exposicion, file = file)
-        command = toggle_streaming_concatenar(command)
+        #command = toggle_streaming_concatenar(command)
         self._dryrunrun(command, 'cam', **kwargs)
         self.filequeues['foto'].put(file)
         return path.basename(file)
@@ -148,11 +153,17 @@ class Oscilator:
                    '-ex off -n -br 70 -co 50 -t {dur} -v&').format(
                            file = file,
                            dur = duration)
-        command = toggle_streaming_concatenar(command)
+        #command = toggle_streaming_concatenar(command)
         self._dryrunrun(command, 'cam')
         self.filequeues['video'].put(file)
         return path.basename(file)
-        
+
+    def live(self,):
+        file = nuevo_nombre(*nombres['live'])
+        command = ('raspistill -o {file}').format(file=file)
+        self._dryrunrun(command, block=True)
+        return file
+
     def fotos(self, freq_start, freq_end):
         '''Barre cien frecuencais entre freq_start y freq_end. Saca una foto 
         de larga exposicion a cada frecuencia.'''

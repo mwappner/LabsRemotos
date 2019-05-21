@@ -241,6 +241,13 @@ def get_timelapse(file):
         return jsonify(status=-3, mensaje=msg)
 
 
+@app.route('/live')
+@jwt_required
+def live():
+	file = dev.live()
+	return send_file(file)
+
+
 @app.route('/stop')
 @jwt_required
 def stop():
@@ -253,6 +260,7 @@ def stop():
 def play():
     dev.play()
     return jsonify(status=0)
+
 
 
 def main(debug=True, browser=False, port=5000):
