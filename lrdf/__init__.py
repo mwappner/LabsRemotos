@@ -242,9 +242,15 @@ def get_timelapse(file):
 
 
 @app.route('/live')
+@app.route('/live/<float:delay1>/<float:delay2>')
 @jwt_required
-def live():
-	file = dev.live()
+def live(delay1, delay2):
+	if delay1 is None:
+		delay1 = 1
+	if delay2 is None:
+		delay2 = 1
+		
+	file = dev.live(delay, delay2)
 	return send_file(file)
 
 

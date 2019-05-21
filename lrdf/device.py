@@ -158,10 +158,15 @@ class Oscilator:
         self.filequeues['video'].put(file)
         return path.basename(file)
 
-    def live(self,):
+    def live(self, delay1, delay2):
         file = nuevo_nombre(*nombres['live'])
-        command = ('raspistill -o {file}').format(file=file)
-        self._dryrunrun(command, 'cam', block=True)
+        command = ('raspistill -w 640 -h 480 -o {file} '
+            '--nopreview -t 0 -s').format(file=file)
+        self._dryrunrun(command, 'cam')
+        sleep(delay1)
+        run('pkill -SIGUSR1 raspistill')
+        sleep(delay2)
+        run('pkill -9 raspistill')
         return file
 
     def fotos(self, freq_start, freq_end):
