@@ -140,7 +140,7 @@ class Oscilator:
         be saved.'''
         # Assign given name. If no name was given, assign deffault
         file = file or nuevo_nombre(*nombres['foto'])
-        command = 'raspistill -ss {shutterspeed} -o {file}'.format(
+        command = 'raspistill -ss {shutterspeed} -o {file} -t 1'.format(
             shutterspeed = self.exposicion, file = file)
         #command = toggle_streaming_concatenar(command)
         self._dryrunrun(command, 'cam', **kwargs)
@@ -159,7 +159,7 @@ class Oscilator:
         return path.basename(file)
 
     def live(self, delay1, delay2):
-        file = nuevo_nombre(*nombres['live'])
+        file = path.join(nombres['live'][0], 'foto.jpg')
         command = ('raspistill -w 640 -h 480 -o {file} '
             '--nopreview -t 0 -s').format(file=file)
         self._dryrunrun(command, 'cam')
