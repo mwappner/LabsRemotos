@@ -199,7 +199,9 @@ def sacar_timelapse(frec_i, frec_f):
 @app.route('/getfoto/<path:file>')
 @jwt_required
 def get_ultima_foto(file):
-
+    if dev_dryrun:
+        return jsonify('File sent: {}'.format(file))
+    
     try:
         return send_file(path.join(nombres['foto'][0],file))
     except FileNotFoundError:
@@ -210,6 +212,9 @@ def get_ultima_foto(file):
 @app.route('/getvideo/<path:file>')
 @jwt_required
 def get_video(file):
+    if dev_dryrun:
+        return jsonify('File sent: {}'.format(file))
+
     try:
         return send_file(path.join(nombres['video'][0],file))
     except FileNotFoundError:
@@ -235,6 +240,8 @@ def get_timelapse(file):
                 remove(f)
 
         dev.play() #vuelvo a arrancar
+        if dev_dryrun:
+            return jsonify('File sent: {}'.format(filename))
         return send_file('send.zip')
     else:
         msg = 'Archivo no existente.'
@@ -244,14 +251,18 @@ def get_timelapse(file):
 @app.route('/live')
 @app.route('/live/<float:delay1>/<float:delay2>')
 @jwt_required
-def live(delay1, delay2):
-	if delay1 is None:
-		delay1 = 1
-	if delay2 is None:
-		delay2 = 1
-		
-	file = dev.live(delay, delay2)
-	return send_file(file)
+def live(delay1=None, delay2=None):
+    if delay1 is None:
+        delay1 = 1
+    if delay2 is None:
+        delay2 = 1
+        
+    file = dev.live(delay1, delay2)
+
+    if dev_dryrun:
+        return jsonify('File sent: {}'.format(file))
+    
+    return send_file(file)
 
 
 @app.route('/stop')
