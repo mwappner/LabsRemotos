@@ -39,7 +39,7 @@ else:
 
 @app.route('/')
 def index():
-    return 'LRDF v2019-5-21'
+    return 'LRDF v2019-5-24'
 
 
 def cambiar_valor(parametro, valor, status=0):
@@ -260,7 +260,7 @@ def live(delay1=None, delay2=None):
     file = dev.live(delay1, delay2)
 
     if dev_dryrun:
-        return jsonify('File sent: {}'.format(file))
+        return jsonify('File sent: {}'.format(path.basename(file)))
     
     return send_file(file)
 
