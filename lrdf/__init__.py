@@ -253,9 +253,9 @@ def get_timelapse(file):
 @jwt_required
 def live(delay1=None, delay2=None):
     if delay1 is None:
-        delay1 = 1
+        delay1 = 0
     if delay2 is None:
-        delay2 = 1
+        delay2 = 0.1
         
     file = dev.live(delay1, delay2)
 

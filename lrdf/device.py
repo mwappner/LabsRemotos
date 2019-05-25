@@ -159,7 +159,9 @@ class Oscilator:
         return path.basename(file)
 
     def live(self, delay1, delay2):
-        file = path.join(nombres['live'][0], 'foto.jpg')
+        #file = path.join(nombres['live'][0], 'foto.jpg')
+        file = nuevo_nombre(*nombres['live'])
+        self.filequeues['live'].put(file)
         command = ('raspistill -w 640 -h 480 -o {file} '
             '--nopreview -t 0 -s').format(file=file)
         self._dryrunrun(command, 'cam')
