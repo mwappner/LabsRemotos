@@ -2,8 +2,8 @@ from os import listdir, remove, path, getcwd, getenv
 from zipfile import ZipFile
 from warnings import catch_warnings
 from flask import Flask, request, send_file, jsonify, Response
-from .device import rangos, nombres, Oscilator, clip_between
-from .utils import utc_later
+from .device import rangos, nombres, Oscilator
+from .utils import utc_later, clip_between
 
 # status_key = {0:'Todo OK', -1:'Valor inválido', -2:'Valor fuera de rango', -3:'Archivo inexistente'}
 
@@ -39,7 +39,7 @@ else:
 
 @app.route('/')
 def index():
-    return 'LRDF v2019-5-24'
+    return 'LRDF v2019-5-25'
 
 
 def cambiar_valor(parametro, valor, status=0):
@@ -249,20 +249,23 @@ def get_timelapse(file):
 
 
 @app.route('/live')
-@app.route('/live/<float:delay1>/<float:delay2>')
 @jwt_required
 def live(delay1=None, delay2=None):
-    if delay1 is None:
-        delay1 = 0
-    if delay2 is None:
-        delay2 = 0.1
-        
-    file = dev.live(delay1, delay2)
-
+    try:
+        file = dev.live()
+    except ValueError:
+        msg = 'Live is currently off.'
+        return jsonify(status=0, mensaje=msg)
     if dev_dryrun:
         return jsonify('File sent: {}'.format(path.basename(file)))
-    
     return send_file(file)
+
+
+@app.route('/forcelive')
+@jwt_required
+def forcelive():
+    dev._start_live()
+    return jsonify(status=0)
 
 
 @app.route('/stop')

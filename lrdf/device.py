@@ -1,10 +1,10 @@
 from time import sleep, time
 from threading import Thread
-from os import listdir, remove, path, makedirs, getenv
+from os import listdir, remove, path, makedirs, getenv, rename
 from shutil import rmtree
 from queue import Empty
 from delegator import run
-from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre, toggle_streaming_concatenar, linspace
+from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre, linspace
 
 
 rangos = {
@@ -32,6 +32,7 @@ replay_when_changed = (
 
 # Construye rutas completas donde guardar cada tipo de archivo
 store_directory = getenv('STORE_FOLDER', '/home/pi/lrdf_use/temporary')
+#store_directory = getenv('STORE_FOLDER', r'C:\Users\Marcos\Documents\Facu\Labs remotos\testing')
 constructor = lambda name: path.join(store_directory, name)
 nombres = {
     'video' : (constructor('videos'), '.h264'),
@@ -41,7 +42,16 @@ nombres = {
     }
 # Si no existen las carpetas, las crea
 for d, _ in nombres.values():
-    makedirs('d', exist_ok=True)
+    makedirs(d, exist_ok=True)
+
+#A decorator
+def toggle_live(func):
+    def decorated_func(self, *args, **kwargs):
+        self._stop_live()
+        r = func(self, *args, **kwargs)
+        self._start_live()
+        return r
+    return decorated_func
 
 class Oscilator:
     '''A class containing the parameters of the device.'''
@@ -70,7 +80,8 @@ class Oscilator:
 
 
         self.proc_running = dict(cam=ProcRunning(), sound=ProcRunning())
-        self.stopqueue = DeleterQueue(maxsize=1) #acepta cosas per guarda una sola
+#        self.stopqueues = {k:DeleterQueue(maxsize=1) for k in ('live', 'timelapse')} #acepta cosas pero guarda una sola
+        self.stopqueue = DeleterQueue(maxsize=1)
 
         self.filequeues = {k:DeleterQueue(accion=remove) for k in nombres}
         self.filequeues['timelapse'].accion = rmtree #para timelapses necesito otra acción
@@ -79,6 +90,9 @@ class Oscilator:
         self._timestart_sound = time() #la primera vez, is_on no va a dar bien, pero por lo menos no tira error.
         self._isplaying = False
         #self._timestart_cam = time()
+
+        self._livefotosfunc = self._livefotosmaker()
+        self._start_live()
 
     def _existentes(self):
         #Si estoy en modo dryrun, no cargo los archivos (suele ser en otro SO)
@@ -110,6 +124,66 @@ class Oscilator:
         else:
             self.proc_running[cat].run_new(command, **kwargs)
 
+    ######### live
+    def _start_live(self):
+        self._islive = True
+        t = Thread(target=self._livefotosfunc)
+        t.start()
+
+    def _stop_live(self):
+        self.stopqueue.put(1)
+        sleep(0.1)
+
+    def live(self):
+        if self._islive:
+            return self._current_live_file
+        else:
+            raise ValueError('live is off')
+
+    def _livefotosmaker(self):
+        file = path.join(nombres['live'][0], 'foto.txt')
+        command = 'raspistill -w 640 -h 480 -o {} --nopreview -t 0 -s'.format(file)
+        def sacar_continuo():
+            #start cam
+#            self._dryrunrun(command, 'cam')
+            run(command, block=False) #not using _dryrunrun, cause that would stop other stuff
+#            print('Starting')
+
+            #try to empty stopqueue
+            try:
+                self.stopqueue.get(block=False)
+            except Empty:
+                pass
+            
+            #take pictures as often as possible:
+            while self.stopqueue.empty():
+                run('pkill -SIGUSR1 raspistill')
+#                if randint(0,4)==0:
+#                    with open(file, 'w') as f:
+#                        f.write('hola')
+                #Try to rename the picture, which will only succeed if a picture was taken
+                try:
+                    nf = nuevo_nombre(*nombres['live']) #give it a unique name
+                    rename(file, nf) 
+                    self.filequeues['live'].put(nf) #never store more than three
+                    self._current_live_file = nf
+                except FileNotFoundError:
+                    pass
+                sleep(.2)
+            else:
+                #stop cam and change live attribute value
+                run('pkill -9 raspistill')
+                self._islive = False
+#                print('Finished')
+                try:
+                    self.stopqueue.get(block=False)
+                except Empty:
+                    pass #this shouldn't happen, but just in case
+
+        return sacar_continuo
+
+
+    ######### stuff regarding sound
     def play(self):
         #play with current values
         self.stopqueue.put(1)
@@ -122,7 +196,7 @@ class Oscilator:
     def stop(self):
         for proc in self.proc_running.values():
             proc.kill()
-        self.stopqueue.put(1)
+        self._stop_live()
         self._isplaying = False
 
     def get_params(self):
@@ -131,10 +205,11 @@ class Oscilator:
     def sweep(self, time, freq_start, freq_end):
         if freq_start >= freq_end:
             raise ValueError('Frecuencias incompatibles.')
-        self.stopqueue.put(1)
         command = 'play -n -c1 synth {} sine {}:{}'.format(time, freq_start, freq_end)
         self._dryrunrun(command, 'sound')
 
+    ######### studd regarding camera
+    @toggle_live
     def snapshot(self, file='', **kwargs):
         '''Takes a single snapshot and returns a filename under which the picture taken will 
         be saved.'''
@@ -147,6 +222,7 @@ class Oscilator:
         self.filequeues['foto'].put(file)
         return path.basename(file)
 
+    @toggle_live
     def video(self, duration):
         file = nuevo_nombre(*nombres['video'])
         command = ('raspivid -o {file} -w 960 -h 516 -roi 0,0.5,1,1 -fps 30 ' 
@@ -157,19 +233,6 @@ class Oscilator:
         self._dryrunrun(command, 'cam')
         self.filequeues['video'].put(file)
         return path.basename(file)
-
-    def live(self, delay1, delay2):
-        #file = path.join(nombres['live'][0], 'foto.jpg')
-        file = nuevo_nombre(*nombres['live'])
-        self.filequeues['live'].put(file)
-        command = ('raspistill -w 640 -h 480 -o {file} '
-            '--nopreview -t 0 -s').format(file=file)
-        self._dryrunrun(command, 'cam')
-        sleep(delay1)
-        run('pkill -SIGUSR1 raspistill')
-        sleep(delay2)
-        run('pkill -9 raspistill')
-        return file
 
     def fotos(self, freq_start, freq_end):
         '''Barre cien frecuencais entre freq_start y freq_end. Saca una foto 
@@ -211,7 +274,8 @@ class Oscilator:
             for name, value in d.items():
                 setattr(self, name, value)
         
-        #vacío la cola por si acaso
+        #paro el live y vacío la cola
+        self.stopqueue.put(1)
         if not self.stopqueue.empty():
             self.stopqueue.get(block=False)
 
