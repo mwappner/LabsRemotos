@@ -142,6 +142,16 @@ def view_foto():
     return jsonify(status=0, valor=mandar)
 
 
+@app.route('/video/<int:duracion>')
+@app.route('/video/<float:duracion>')
+@jwt_required
+def view_video(duracion):
+    file = dev.video(duracion)
+    mandar = dict(file=file,
+                 tiempo_estimado=utc_later(duracion+10)) #lo hago esperar al menos diez segundos.
+    return jsonify(status=0, valor=mandar)
+
+
 @app.route('/barrido/<int:duracion>/<int:frec_i>/<int:frec_f>')
 @app.route('/barrido/<int:duracion>/<float:frec_i>/<int:frec_f>')
 @app.route('/barrido/<int:duracion>/<int:frec_i>/<float:frec_f>')
