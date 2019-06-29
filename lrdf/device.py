@@ -102,7 +102,8 @@ class Oscilator:
 
     @property
     def amplitud(self):
-        return self._amplitud
+        amp_rango = (.6, .96)
+        return (self._amplitud - amp_rango[0]) * 100 / (amp_rango[1] - amp_rango[0])
     @amplitud.setter
     def amplitud(self, value):
         '''Escala el valor dado del intervalo [0,100] al intervalo <amp_rango>. Value
