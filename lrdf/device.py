@@ -103,13 +103,13 @@ class Oscilator:
     @property
     def amplitud(self):
         amp_rango = (60, 96)
-        return int((self._amplitud - amp_rango[0]) * 100 / (amp_rango[1] - amp_rango[0]))
+        return round((self._amplitud - amp_rango[0]) * 100 / (amp_rango[1] - amp_rango[0]))
     @amplitud.setter
     def amplitud(self, value):
         '''Escala el valor dado del intervalo [0,100] al intervalo <amp_rango>. Value
         viene dado en [0, 100]'''
         amp_rango = (60, 96)
-        self._amplitud = int((amp_rango[1] - amp_rango[0])/100 * value + amp_rango[0])
+        self._amplitud = round((amp_rango[1] - amp_rango[0])/100 * value + amp_rango[0])
     
 #    @property
 #    def ison_cam(self):
