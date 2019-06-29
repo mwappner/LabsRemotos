@@ -102,14 +102,14 @@ class Oscilator:
 
     @property
     def amplitud(self):
-        amp_rango = (.6, .96)
-        return (self._amplitud - amp_rango[0]) * 100 / (amp_rango[1] - amp_rango[0])
+        amp_rango = (60, 96)
+        return int((self._amplitud - amp_rango[0]) * 100 / (amp_rango[1] - amp_rango[0]))
     @amplitud.setter
     def amplitud(self, value):
         '''Escala el valor dado del intervalo [0,100] al intervalo <amp_rango>. Value
         viene dado en [0, 100]'''
-        amp_rango = (.6, .96)
-        self._amplitud = (amp_rango[1] - amp_rango[0])/100 * value + amp_rango[0]
+        amp_rango = (60, 96)
+        self._amplitud = int((amp_rango[1] - amp_rango[0])/100 * value + amp_rango[0])
     
 #    @property
 #    def ison_cam(self):
@@ -124,7 +124,7 @@ class Oscilator:
     def play(self):
         #play with current values
         self.stopqueue.put(1)
-        run('amixer set PCM -- {}%'.format(self.amplitud*100))
+        run('amixer set PCM -- {}%'.format(self._amplitud))
         command = 'play -n -c1 synth {} sine {}'.format(self.duracion, self.frecuencia)
         self._dryrunrun(command, 'sound')
         self._timestart_sound = time()
@@ -193,7 +193,7 @@ class Oscilator:
         d = self.__dict__.copy()
         
         self.duracion = 3
-        self.amplitud = 1
+        self.amplitud = 100
         frecuencias = linspace(freq_start, freq_end, 100)
         
         #creo carpeta donde voy a guardar el timelapse y una función para los archivos

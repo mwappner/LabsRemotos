@@ -107,7 +107,7 @@ def view_fase(valor=None):
 
 
 @app.route('/amplitud')
-@app.route('/amplitud/<float:valor>')
+@app.route('/amplitud/<int:valor>')
 @app.route('/amplitud/<int:valor>')
 @jwt_required
 def view_amplitud(valor=None):
