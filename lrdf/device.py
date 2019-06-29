@@ -9,7 +9,7 @@ from .utils import DeleterQueue, ProcRunning, clip_between, nuevo_nombre, toggle
 
 rangos = {
     'frecuencia': (20, 2000), #Hz
-    'amplitud': (.6, .96), #en escala [0,1]
+    'amplitud': (0, 100), #en %
     'fase': (-180, 180), #grados
     'duracion': (0,3600), #segundos
     'exposicion': (10000, 5000000) #microsegundos
@@ -17,7 +17,7 @@ rangos = {
 
 iniciales = {
     'frecuencia': 100, #Hz
-    'amplitud': rangos['amplitud'][-1], #en escala [0,1]
+    'amplitud': rangos['amplitud'][-1], #valor máximo
     'fase': 0, #grados
     'duracion': 1800, #segundos
     'exposicion': 30000, #microsegundos
@@ -100,6 +100,16 @@ class Oscilator:
     def ison_sound(self):
         return self._timestart_sound + self.duracion > time() and self._isplaying
 
+    @property
+    def amplitud(self):
+        return self._amplitud
+    @amplitud.setter
+    def amplitud(self, value):
+        '''Escala el valor dado del intervalo [0,100] al intervalo <amp_rango>. Value
+        viene dado en [0, 100]'''
+        amp_rango = (.6, .96)
+        self._amplitud = (amp_rango[1] - amp_rango[0])/100 * value + amp_rango[0]
+    
 #    @property
 #    def ison_cam(self):
 #        return self._timestart_cam + self.duration > time()
